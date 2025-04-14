@@ -1,0 +1,46 @@
+import { GamesQuery } from '@azuro-org/toolkit'
+import Link from 'next/link'
+import dayjs from 'dayjs'
+
+
+type Props = {
+  game: GamesQuery['games'][0]
+}
+
+export function GameCard(props: Props) {
+  const { gameId, sport, league, participants, startsAt } = props.game
+
+  return (
+    <Link
+      className="p-4 bg-blue-500 rounded-3xl hover:bg-orange-100 transition"
+      href={`/events/${sport.slug}/${gameId}`}
+    >
+      <div className="flex justify-between text-sm text-black">
+        <span>{sport.name}</span>
+        <span>{dayjs(+startsAt * 1000).format('DD MMM HH:mm')}</span>
+      </div>
+
+      <div className="mt-2 text-sm text-green-300">
+        {league.country.name} &middot; {league.name}
+      </div>
+      
+      <div className="mt-3 space-y-1">
+        {
+          participants.map(({ image, name }) => (
+            <div key={name} className="flex items-center">
+              <div className="flex items-center justify-center w-8 h-8 mr-2 border border-orange-300 rounded-full">
+                {
+                  Boolean(image) && (
+                    <img className="w-4 h-4" src={image!} alt="" />
+                  )
+                }
+              </div>
+              <span className="text-md">{name}</span>
+            </div>
+          ))
+        }
+      </div>
+      
+    </Link>
+  )
+}
