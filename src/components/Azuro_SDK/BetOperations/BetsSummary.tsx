@@ -16,8 +16,19 @@ function Content({setOpen}: {setOpen: (open: boolean) => void}) {
     account: address!,
   })
 
+  console.log(address)
+
   if (!address || loading) {
-    return null
+    return (
+      <div className="w-70 p-3">
+        <div className="flex items-center justify-between mb-2">
+          Please connect your wallet to see your progress
+        </div>
+        <div className="border-gray-300 bg-gray-600 text-center text-bold" onClick={() => setOpen(false)}>
+          V
+        </div>
+      </div>
+    )
   }
 
   return (

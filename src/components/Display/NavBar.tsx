@@ -1,58 +1,44 @@
 'use client'
-import React, { useEffect } from 'react'
+import React from 'react'
+import { ActiveLink } from './ActiveLink' // Import the custom component
 
-import { ActiveLink, LiveSwitcher, SelectAppChain } from '@/components'
-import { reconnect } from '@wagmi/core'
-import { useConfig } from 'wagmi'
-
+import { LiveSwitcher, SelectAppChain } from '@/components'
 import { ConnectWalletButton } from './connectWallet'
 
 import * as Logo from '@/assets/logo.png'
 
-
-
 export function NavBar() {
-  const config = useConfig()
-
-  useEffect(() => {
-    ;(async () => {
-      try {
-        await reconnect(config)
-      }
-      catch {}
-    })()
-  }, [])
+  const links = [
+    { href: '/', label: 'Home' },
+    { href: '/events/top', label: 'Events', regex: '^/events(/|$)' }, // Regex for /events/*
+    { href: '/bets', label: 'Bets' },
+  ]
 
   return (
-    <header className="flex items-center  border-b border-orange-200 bg-yellow-800 w-full">
-      
+    <header className="flex items-center border-b border-orange-200 bg-yellow-800 w-full">
       <img src={Logo.default.src} alt="Logo" className="w-25 h-25" />
+
       
-      <div className="flex ml-10 text-black text-bold text-sm font-semibold px-3.5">
-        {[
-          { href: '/events/top', regex: '^\\/events\\/[^/]+?$', label: 'Events' },
-          { href: '/bets', regex: '^\\/bets', label: 'Bets' },
-          // Uncomment and add more items as needed
-          // { href: '/wave', regex: '^\\/wave', label: 'Azuro Wave' },
-        ].map(({ href, regex, label }, index) => (
+      <nav className="ml-10 flex space-x-4">
+        {links.map(({ href, label, regex }) => {
+          return (
             <ActiveLink
-            key={index}
-            className="hover:text-black transition ml-4 first:ml-0 bg-yellow-500 rounded-lg px-2 underline"
-            activeClassName="!text-black font-semibold !cursor-default"
-            href={href}
-            regex={regex}
+              key={href}
+              href={href}
+              regex={regex}
+              className="underline hover:text-yellow-300 py-2 px-4 rounded"
+              activeClassName="font-bold !text-green-600 bg-gray-700"
             >
-            {label}
+              {label}
             </ActiveLink>
-        ))}
-      </div>
-      
+          );
+        })}
+      </nav>
+
       <div className="ml-auto flex items-center">
         <LiveSwitcher />
         <SelectAppChain />
-
         <ConnectWalletButton />
-          
       </div>
     </header>
   )

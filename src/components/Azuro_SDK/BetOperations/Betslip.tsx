@@ -162,7 +162,7 @@ function Content() {
   }, [ isDeBridgeEnable ])
 
   return (
-    <div className="bg-orange-100 p-4 mb-4 rounded-md w-full max-h-[90vh] overflow-auto border border-solid">
+    <div className="bg-orange-100 p-4 mb-4 rounded-md w-full max-h-[90vh] overflow-auto border border-solid text-black">
       <div className="flex items-center justify-between mb-2">
         <div className="">
           Betslip {items.length > 1 ? isBatch ? 'Batch' : 'Combo' : 'Single'} {items.length ? `(${items.length})`: ''}
@@ -316,14 +316,14 @@ export function Betslip() {
   // console.log(items)
 
   return (
-    <div className="fixed bottom-4 right-4 w-full max-w-full md:max-w-sm text-black">
+    <div className="fixed bottom-4 right-4 w-full max-w-full md:max-w-sm">
       {
         isOpen && (
           <Content />
         )
       }
       <button
-        className="flex items-center py-2 px-4 bg-orange-100 whitespace-nowrap rounded-full ml-auto"
+        className="flex items-center py-2 px-4 bg-orange-100 whitespace-nowrap rounded-md ml-auto text-black"
         onClick={() => setOpen(!isOpen)}
       >
         Betslip {items.length || ''}
