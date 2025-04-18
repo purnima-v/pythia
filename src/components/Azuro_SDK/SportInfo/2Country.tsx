@@ -1,11 +1,14 @@
 'use client'
-import { SportsQuery } from '@azuro-org/toolkit'
+import { SportsQuery } from '@/types/Sport'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import cx from 'clsx'
 
 import { League } from './3League'
 import { CountryFlag } from './CountryFlag/CountryFlag'
+
+import { colorTheme} from '@/constants/colors'
+
 
 type CountryProps = {
   className?: string
@@ -24,9 +27,7 @@ export function Country(props: CountryProps) {
   
   return (
     <div
-      className={
-        "p-4 bg-teal-400 rounded-3xl "
-      }>
+      className={`p-4 rounded-3xl mt-2 first-of-type:mt-0 ${colorTheme.country}`}>
         {
           !isLeaguePage && (
             <div className="flex items-center mb-2 text-black">

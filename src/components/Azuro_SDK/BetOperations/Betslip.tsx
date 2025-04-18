@@ -11,7 +11,7 @@ import {
 } from '@azuro-org/sdk'
 import { useAccount } from 'wagmi'
 
-import { useBetslip } from '@/context/betslip'
+import { useBetslip } from '@/components/Azuro_SDK/context/betslip'
 
 import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
 

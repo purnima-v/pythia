@@ -7,8 +7,8 @@ import { RainbowKitProvider, getDefaultWallets, getDefaultConfig } from '@rainbo
 import { polygonAmoy, gnosis, polygon, chiliz, spicy } from 'wagmi/chains'
 import { WagmiProvider } from 'wagmi'
 
-import { BetslipProvider } from '@/context/betslip'
-import { BetSummaryProvider } from '@/context/betsummary'
+import { BetslipProvider } from '@/components/Azuro_SDK/context/betslip'
+import { BetSummaryProvider } from '@/components/Azuro_SDK/context/betsummary'
 import { Address } from 'viem';
 
 

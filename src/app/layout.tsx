@@ -37,7 +37,7 @@ export default async function RootLayout({
   console.log('initialChainId', initialChainId)
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         // className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

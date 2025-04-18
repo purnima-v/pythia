@@ -4,7 +4,7 @@ import {
   useChain } from "@azuro-org/sdk"
 import { useAccount } from "wagmi"
 
-import { OpenSummary } from '@/context/betsummary'
+import { OpenSummary } from '@/components/Azuro_SDK/context/betsummary'
 
 
 

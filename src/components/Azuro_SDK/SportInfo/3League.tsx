@@ -1,11 +1,13 @@
 'use client'
-import { type SportsQuery } from '@azuro-org/toolkit';
+import { SportsQuery } from '@/types/Sport'
 import Link from 'next/link'
 import cx from 'clsx'
+
 import { useParams } from 'next/navigation'
 
 import { CountryFlag } from './CountryFlag/CountryFlag'
 import { Game } from './4Game'
+import { colorTheme} from '@/constants/colors'
 
 
 type LeagueProps = {
@@ -28,8 +30,8 @@ export function League(props: LeagueProps) {
   
   return (
     <div
-      className={cx(className, {
-        "p-4 bg-orange-400 rounded-md": !isLeaguePage
+      className={cx(className, colorTheme.league, {
+        "p-4 rounded-md": !isLeaguePage
       })}>
         <div className={cx("flex items-center mb-2", {
           "text-sm": !isLeaguePage,

@@ -1,11 +1,12 @@
 'use client'
-import { SportsQuery } from '@azuro-org/toolkit'
+import { SportsQuery } from '@/types/Sport'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import cx from 'clsx'
 
 import { Country } from './2Country'
 
+import cx from 'clsx'
+import { colorTheme} from '@/constants/colors'
 
 type SportProps = {
   sport: SportsQuery['sports'][0]
@@ -22,9 +23,7 @@ export function Sport(props: SportProps) {
 
   return (
     <div
-      className={cx({
-        "p-4 bg-yellow-500 rounded-3xl mt-2 first-of-type:mt-0": !isSportPage
-      })}
+      className={`${!isSportPage && `p-4 rounded-3xl mt-2 first-of-type:mt-0 ${colorTheme.sport}`}`}
     >
       {
         !isSportPage && (
@@ -40,7 +39,7 @@ export function Sport(props: SportProps) {
         countries.map(country => (
           <Country 
             key={country.slug} 
-            className="mt-2 first-of-type:mt-0" 
+            className="mt-2" 
             country={country} 
             sportSlug={sport.slug} 
           />

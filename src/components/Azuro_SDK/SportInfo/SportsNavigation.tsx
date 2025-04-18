@@ -1,25 +1,10 @@
 'use client'
-import { useSportsNavigation, useLive } from '@azuro-org/sdk'
 import { ActiveLink } from '@/components'
 
-import { useEffect } from 'react'
-
+import {sportsGames} from '@/constants/SampleSport'
 
 
 export function SportsNavigation() {
-  const { isLive } = useLive()
-  const { loading, sports } = useSportsNavigation({
-    withGameCount: true,
-    isLive,
-  })
-
-  useEffect(() => {
-    console.log(sports)
-  }, [isLive, sports])
-
-  if (loading) {
-    return <div>Loading...</div>
-  }
 
   return (
     <div className="w-full my-4 ml-5 overflow-hidden">
@@ -33,7 +18,7 @@ export function SportsNavigation() {
               Top
             </ActiveLink>
             {
-            [ ...sports || [] ]
+            [ ...sportsGames || [] ]
               .sort((a, b) => b.games!.length - a.games!.length)
               .map(({ slug, name, games }) => (
               <ActiveLink
