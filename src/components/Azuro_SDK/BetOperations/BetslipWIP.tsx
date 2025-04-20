@@ -1,25 +1,51 @@
-'use client'
-import React, { useEffect, useState } from 'react'
-import {
-  useBaseBetslip,
-  useBetTokenBalance,
-  useChain,
-  useDetailedBetslip,
-  BetslipDisableReason,
-  useDeBridgeSupportedChains,
-  useLiveBetFee,
-} from '@azuro-org/sdk'
-import { useAccount } from 'wagmi'
+// 'use client'
+// import React, { useEffect, useState } from 'react'
+// import {
+//   useBaseBetslip,
+//   useBetTokenBalance,
+//   useChain,
+//   useDetailedBetslip,
+//   BetslipDisableReason,
+//   useDeBridgeSupportedChains,
+//   useLiveBetFee,
+// } from '@azuro-org/sdk'
+// import { useAccount } from 'wagmi'
+// import { useBalance } from 'wagmi'
 
-import { useBetslip } from '@/components/Azuro_SDK/context/betslip'
+// import { useBetslip } from '@/components/Azuro_SDK/context/betslip'
 
-import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
+// import { BetButton, DeBridgeBetButton, BetslipCard } from '@/components'
 
 
-// function AmountInput() {
-//   const { betAmount, changeBetAmount, maxBet, minBet } = useDetailedBetslip()
-//   const { betToken } = useChain()
-//   const { loading: isBalanceFetching, balance } = useBetTokenBalance()
+// type betSlip = {
+//   betAmount: string,
+//   maxBet: string,
+//   minBet: string,
+// }
+
+// const allSlips: betSlip[] = []
+
+// function changeBetAmount(betslip: betSlip, value: string) {
+//   betslip.betAmount = value
+// }
+
+
+// function AmountInput(betslip: betSlip) {
+//   // const { betAmount, changeBetAmount, maxBet, minBet } = useDetailedBetslip()
+//   const account = useAccount()
+//   const { betToken, appChain } = useChain()
+
+//   const [currAmount, setCurrAmount] = useState<string>("")
+  
+
+//   const balance = useBalance({
+//     address: account?.address,
+//     token: betToken.address,
+//     chainId: appChain.id,
+//   })
+
+//   // const { loading: isBalanceFetching, balance } = useBetTokenBalance()
+
 
 //   return (
 //     <div className="mt-4 pt-4 border-t border-orange-300 space-y-2">
@@ -27,28 +53,26 @@ import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
 //         <span className="text-md text-orange-400">Wallet balance:</span>
 //         <span className="text-md font-semibold">
 //           {
-//             isBalanceFetching ? (
-//               <>Loading...</>
+//             balance ? (
+//               <>{balance} 
+//               {/* {balance} */}
+//               </>
 //             ) : (
-//               balance !== undefined ? (
-//                 <>{(+balance).toFixed(2)} {betToken.symbol}</>
-//               ) : (
-//                 <>-</>
-//               )
+//               <>-</>
 //             )
 //           }
 //         </span>
 //       </div>
 //       {
-//         Boolean(maxBet) && <div className="flex items-center justify-between">
+//         Boolean(betslip.maxBet) && <div className="flex items-center justify-between">
 //           <span className="text-md text-orange-400">Max bet amount:</span>
-//           <span className="text-md font-semibold">{maxBet} {betToken.symbol}</span>
+//           <span className="text-md font-semibold">{betslip.maxBet} {betToken.symbol}</span>
 //         </div>
 //       }
 //       {
-//         Boolean(minBet) && <div className="flex items-center justify-between">
+//         Boolean(betslip.minBet) && <div className="flex items-center justify-between">
 //           <span className="text-md text-orange-400">Min bet amount:</span>
-//           <span className="text-md font-semibold">{minBet} {betToken.symbol}</span>
+//           <span className="text-md font-semibold">{betslip.minBet} {betToken.symbol}</span>
 //         </div>
 //       }
 //       <div className="flex items-center justify-between">
@@ -57,9 +81,14 @@ import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
 //           className="w-[140px] py-2 px-4 border border-orange-400 text-md text-right font-semibold rounded-md"
 //           type="number"
 //           placeholder="Bet amount"
-//           value={betAmount}
-//           onChange={(event) => changeBetAmount(event.target.value)}
+//           value={betslip.betAmount}
+//           onChange={(event) => setCurrAmount(event.target.value)}
 //         />
+//         <button
+//           onClick={() => changeBetAmount(betslip, currAmount)}
+//         >
+//           Change Bet Amount
+//         </button>
 //       </div>
 //     </div>
 //   )
@@ -108,21 +137,21 @@ import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
 //   )
 // }
 
-// const errorPerDisableReason = {
-//   [BetslipDisableReason.ComboWithForbiddenItem]: 'One or more conditions can\'t be used in combo',
-//   [BetslipDisableReason.BetAmountGreaterThanMaxBet]: 'Bet amount exceeds max bet',
-//   [BetslipDisableReason.BetAmountLowerThanMinBet]: 'Bet amount lower than min bet',
-//   [BetslipDisableReason.ComboWithLive]: 'Live outcome can\'t be used in combo',
-//   [BetslipDisableReason.ConditionStatus]: 'One or more outcomes have been removed or suspended. Review your betslip and remove them.',
-//   [BetslipDisableReason.PrematchConditionInStartedGame]: 'Game has started',
-//   [BetslipDisableReason.ComboWithSameGame]: 'Combo with outcomes from same game prohibited, please use Batch bet',
-//   [BetslipDisableReason.BatchWithLive]: 'Live outcome can\'t be used in batch',
-//   [BetslipDisableReason.FreeBetWithLive]: 'FreeBet can\'t be used for live',
-//   [BetslipDisableReason.FreeBetWithCombo]: 'FreeBet can\'t be used for combo',
-//   [BetslipDisableReason.FreeBetWithBatch]: 'FreeBet can\'t be used for batch',
-//   [BetslipDisableReason.FreeBetExpired]: 'FreeBet is expired',
-//   [BetslipDisableReason.FreeBetMinOdds]: 'Odds\'s too low for FreeBet',
-// } as const
+// // const errorPerDisableReason = {
+// //   [BetslipDisableReason.ComboWithForbiddenItem]: 'One or more conditions can\'t be used in combo',
+// //   [BetslipDisableReason.BetAmountGreaterThanMaxBet]: 'Bet amount exceeds max bet',
+// //   [BetslipDisableReason.BetAmountLowerThanMinBet]: 'Bet amount lower than min bet',
+// //   [BetslipDisableReason.ComboWithLive]: 'Live outcome can\'t be used in combo',
+// //   [BetslipDisableReason.ConditionStatus]: 'One or more outcomes have been removed or suspended. Review your betslip and remove them.',
+// //   [BetslipDisableReason.PrematchConditionInStartedGame]: 'Game has started',
+// //   [BetslipDisableReason.ComboWithSameGame]: 'Combo with outcomes from same game prohibited, please use Batch bet',
+// //   [BetslipDisableReason.BatchWithLive]: 'Live outcome can\'t be used in batch',
+// //   [BetslipDisableReason.FreeBetWithLive]: 'FreeBet can\'t be used for live',
+// //   [BetslipDisableReason.FreeBetWithCombo]: 'FreeBet can\'t be used for combo',
+// //   [BetslipDisableReason.FreeBetWithBatch]: 'FreeBet can\'t be used for batch',
+// //   [BetslipDisableReason.FreeBetExpired]: 'FreeBet is expired',
+// //   [BetslipDisableReason.FreeBetMinOdds]: 'Odds\'s too low for FreeBet',
+// // } as const
 
 
 
@@ -162,7 +191,7 @@ import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
 //   }, [ isDeBridgeEnable ])
 
 //   return (
-//     <div className="bg-orange-100 p-4 mb-4 rounded-md w-full max-h-[90vh] overflow-auto border border-solid text-black">
+//     <div className="bg-orange-100 p-4 mb-4 rounded-md w-full overflow-auto border border-solid text-black">
 //       <div className="flex items-center justify-between mb-2">
 //         <div className="">
 //           Betslip {items.length > 1 ? isBatch ? 'Batch' : 'Combo' : 'Single'} {items.length ? `(${items.length})`: ''}
@@ -260,7 +289,7 @@ import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
 //             }
 //             {
 //               Boolean(!isBatch && !isFreeBet) && (
-//                 <AmountInput />
+//                 <AmountInput {}/>
 //               )
 //             }
 //               <FreeBets />
@@ -309,25 +338,25 @@ import { BetButton, DeBridgeBetButton, BetslipCard } from '../../index'
 
 
 
-export function Betslip() {
-  const { isOpen, setOpen } = useBetslip()
-  const { items } = useBaseBetslip()
+// export function Betslip() {
+//   const { isOpen, setOpen } = useBetslip()
+//   const { items } = useBaseBetslip()
 
-  // console.log(items)
+//   // console.log(items)
 
-  return (
-    <div className="max-w-full md:max-w-sm">
-      {/* {
-        isOpen && (
-          <Content />
-        )
-      } */}
-      <button
-        className="items-center py-2 px-4 bg-orange-100 whitespace-nowrap rounded-md ml-auto text-black border border-solid"
-        onClick={() => setOpen(!isOpen)}
-      >
-        Betslip {items.length || ''}
-      </button>
-    </div>
-  )
-}
+//   return (
+//     <div className="fixed bottom-4 right-4">
+//       {
+//         isOpen && (
+//           <Content />
+//         )
+//       }
+//       <button
+//         className="flex items-center py-2 px-4 bg-orange-100 whitespace-nowrap rounded-md ml-auto text-black"
+//         onClick={() => setOpen(!isOpen)}
+//       >
+//         Betslip {items.length || ''}
+//       </button>
+//     </div>
+//   )
+// }

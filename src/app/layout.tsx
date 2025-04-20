@@ -6,7 +6,8 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { Providers } from '../app/Providers';
 
 import { cookies } from 'next/headers'
-import { Betslip, BetsSummary, NavBar } from '@/components'
+import { Betslip, BetsSummary, FootBar, NavBar } from '@/components'
+import { CreateNewBet } from "@/components/Display/CreateNewBet";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -34,7 +35,7 @@ export default async function RootLayout({
   const initialChainId = cookieStore.get('appChainId')?.value
   const initialLiveState = JSON.parse(cookieStore.get('live')?.value || 'false')
 
-  console.log('initialChainId', initialChainId)
+  // console.log('initialChainId', initialChainId)
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -48,10 +49,12 @@ export default async function RootLayout({
               {children}  
             </main>
           
-          <div className="mx-2">
-            <BetsSummary />
-            <Betslip />
-          </div>
+            <FootBar/>
+            {/* <div className="mx-2">
+              <BetsSummary />
+              <CreateNewBet/>
+              <Betslip />
+            </div> */}
 
           </Providers>
       </body>

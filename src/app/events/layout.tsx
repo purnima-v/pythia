@@ -1,7 +1,7 @@
 'use client'
 import { SportsNavigation, Sport } from '@/components'
 import { useParams } from 'next/navigation'
-import { sampleSports } from '@/constants/SampleSport';
+import { sampleSports, toSportsGames } from '@/constants/SampleSport';
 import { Suspense } from 'react';
 
 
@@ -18,26 +18,26 @@ const getFilteredSports = () => {
 
   // UNCOMMENT BELOW CODE TO GET SPORTS FROM AZURO
 
-  // const { isLive } = useLive()
-  // const props: UseSportsProps = isTopPage ? {
-  //   gameOrderBy: Game_OrderBy.Turnover,
-  //   filter: {
-  //     limit: 10,
-  //   },
-  //   isLive,
-  // } : {
-  //   gameOrderBy: Game_OrderBy.StartsAt,
-  //   orderDir: OrderDirection.Asc,
-  //   filter: {
-  //     sportSlug: params.sport as string,
-  //     countrySlug: params.country as string,
-  //     leagueSlug: params.league as string,
-  //   },
-  //   isLive,
-  // }
-  // const {sports} = useSports(props)
+  const { isLive } = useLive()
+  const props: UseSportsProps = isTopPage ? {
+    gameOrderBy: Game_OrderBy.Turnover,
+    filter: {
+      limit: 10,
+    },
+    isLive,
+  } : {
+    gameOrderBy: Game_OrderBy.StartsAt,
+    orderDir: OrderDirection.Asc,
+    filter: {
+      sportSlug: params.sport as string,
+      countrySlug: params.country as string,
+      leagueSlug: params.league as string,
+    },
+    isLive,
+  }
+  const {sports} = useSports(props)
 
-  // sampleSports.sports = sports
+  sampleSports.sports = sports
 
 
   const filteredSports = isTopPage 
@@ -70,11 +70,11 @@ const getFilteredSports = () => {
 export default function EventsLayout() {
   const { sports } = getFilteredSports()
   
-  console.log(sports)
+  const sportsBar = toSportsGames({ sports })
 
   return (
     <>
-      <SportsNavigation />
+      <SportsNavigation sportsBar={sportsBar}/>
       
       <Suspense fallback={<div>Loading...</div>}>
         <div className='bg-black/5 p-4 rounded-lg flex flex-col gap-4'>

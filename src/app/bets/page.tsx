@@ -1,44 +1,14 @@
 'use client'
-import { usePrematchBets, useLiveBets } from '@azuro-org/sdk'
-import { OrderDirection } from '@azuro-org/toolkit';
-import { useAccount } from 'wagmi';
-import { BetCard, RedeemAll } from '@/components';
-import { useMemo } from 'react';
+import { DisplayBets } from '@/components/Display/DisplayBets'
+import { useBets } from '@/components/betContext'
 
-
-export default function Bets() {
-  const { address } = useAccount()
-
-  const props = {
-    filter: {
-      bettor: address!,
-    },
-    orderDir: OrderDirection.Desc,
-  }
-
-  const { loading: isPrematchLoading, bets: prematchBets } = usePrematchBets(props)
-  const { loading: isLiveLoading, bets: liveBets } = useLiveBets(props)
-
-  const bets = useMemo(() => {
-    return [...liveBets, ...prematchBets].sort((betA, betB) => betB.createdAt - betA.createdAt)
-  }, [ prematchBets, liveBets ])
-
-  if (isLiveLoading || isPrematchLoading) {
-    return <div>Loading...</div>
-  }
-
-  if (!prematchBets?.length && !liveBets?.length) {
-    return <div>You don't have bets yet</div>
-  }
-
+export default function SomePage() {
+  const { bets } = useBets()
+  
   return (
     <div>
-      <RedeemAll bets={bets} />
-      {
-        bets.map(bet => (
-          <BetCard key={`${bet.createdAt}-${bet.tokenId}`} bet={bet} />
-        ))
-      }
+      {/* other content */}
+      <DisplayBets bets={bets} />
     </div>
   )
 }

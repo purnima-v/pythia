@@ -1,12 +1,13 @@
 'use client'
 import React from 'react'
-import { AzuroSDKProvider, LiveProvider } from '@azuro-org/sdk'
-import { ChainId } from '@azuro-org/toolkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, getDefaultWallets, getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { polygonAmoy, gnosis, polygon, chiliz, spicy } from 'wagmi/chains'
 import { WagmiProvider } from 'wagmi'
+import { AzuroSDKProvider, LiveProvider } from '@azuro-org/sdk'
+import { ChainId } from '@azuro-org/toolkit';
 
+import { BetProvider } from '@/components/betContext'
 import { BetslipProvider } from '@/components/Azuro_SDK/context/betslip'
 import { BetSummaryProvider } from '@/components/Azuro_SDK/context/betsummary'
 import { Address } from 'viem';
@@ -51,9 +52,11 @@ export function Providers(props: ProvidersProps) {
           <AzuroSDKProvider initialChainId={chainId} isBatchBetWithSameGameEnabled affiliate={process.env.NEXT_PUBLIC_AFFILIATE_ADDRESS as Address}>
             <BetslipProvider>
               <BetSummaryProvider>
-                <LiveProvider initialLiveState={initialLiveState}>
-                  {children}
-                </LiveProvider>
+                <BetProvider>
+                  <LiveProvider initialLiveState={initialLiveState}>
+                    {children}
+                  </LiveProvider>
+                </BetProvider>
               </BetSummaryProvider>
             </BetslipProvider>
           </AzuroSDKProvider>

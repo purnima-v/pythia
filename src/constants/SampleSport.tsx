@@ -6,8 +6,8 @@ export const sampleSports: SportsQuery = {
       {
         __typename: 'Sport',
         id: '1004',
-        slug: 'eren',
-        name: 'The Eren Game',
+        slug: 'Idiot',
+        name: 'The Idiot Game',
         sportId: '1004',
         countries: [
           {
@@ -18,8 +18,8 @@ export const sampleSports: SportsQuery = {
             leagues: [
               {
                 __typename: 'League',
-                slug: 'japan-eren-league',
-                name: 'Japan Eren League',
+                slug: 'japan-Idiot-league',
+                name: 'Japan Idiot League',
                 turnover: '0',
                 games: [
                   {
@@ -33,13 +33,13 @@ export const sampleSports: SportsQuery = {
                     sport: {
                       __typename: 'Sport',
                       sportId: '1004',
-                      slug: 'eren',
-                      name: 'The Eren Game'
+                      slug: 'Idiot',
+                      name: 'The Idiot Game'
                     },
                     league: {
                       __typename: 'League',
-                      slug: 'japan-eren-league',
-                      name: 'Japan Eren League',
+                      slug: 'japan-Idiot-league',
+                      name: 'Japan Idiot League',
                       country: {
                         __typename: 'Country',
                         slug: 'japan',
@@ -71,8 +71,8 @@ export const sampleSports: SportsQuery = {
             leagues: [
               {
                 __typename: 'League',
-                slug: 'korea-eren-championship',
-                name: 'Korea Eren Championship',
+                slug: 'korea-Idiot-championship',
+                name: 'Korea Idiot Championship',
                 turnover: '0',
                 games: [
                   {
@@ -86,13 +86,13 @@ export const sampleSports: SportsQuery = {
                     sport: {
                       __typename: 'Sport',
                       sportId: '1004',
-                      slug: 'eren',
-                      name: 'The Eren Game'
+                      slug: 'Idiot',
+                      name: 'The Idiot Game'
                     },
                     league: {
                       __typename: 'League',
-                      slug: 'korea-eren-championship',
-                      name: 'Korea Eren Championship',
+                      slug: 'korea-Idiot-championship',
+                      name: 'Korea Idiot Championship',
                       country: {
                         __typename: 'Country',
                         slug: 'korea',
@@ -298,41 +298,41 @@ export const sampleSports: SportsQuery = {
     ]
   };
 
-export const sportsGames = sampleSports.sports.map(sport => ({
-    __typename: sport.__typename,
-    id: sport.id,
-    slug: sport.slug,
-    name: sport.name,
-    sportId: sport.sportId,
-    games: sport.countries.flatMap(country => 
-      country.leagues.flatMap(league => 
-        league.games.map(game => ({
-          __typename: game.__typename,
-          id: game.id
-        }))
-      )
-    )
-  }))
+// export const sportsGames = sampleSports.sports.map(sport => ({
+//     __typename: sport.__typename,
+//     id: sport.id,
+//     slug: sport.slug,
+//     name: sport.name,
+//     sportId: sport.sportId,
+//     games: sport.countries.flatMap(country => 
+//       country.leagues.flatMap(league => 
+//         league.games.map(game => ({
+//           __typename: game.__typename,
+//           id: game.id
+//         }))
+//       )
+//     )
+//   }))
 
 
 
 
 
   // // THIS IS A FUNCTION THAT TURNS A BIG COMPLICATED SPORT TO ITS SIMPLER TYPE...CONFUSING AS TO WHY THIS IS A THING BUT LIKE WHATEVER
-  // export function toSportsGames(sports: SportsQuery): SportsGames[] {
-  //   return sports.sports.map(sport => ({
-  //     __typename: sport.__typename,
-  //     id: sport.id,
-  //     slug: sport.slug,
-  //     name: sport.name,
-  //     sportId: sport.sportId,
-  //     games: sport.countries.flatMap(country => 
-  //       country.leagues.flatMap(league => 
-  //         league.games.map(game => ({
-  //           __typename: game.__typename,
-  //           id: game.id
-  //         }))
-  //       )
-  //     )
-  //   }))
-  // }
+  export function toSportsGames(sports: SportsQuery): SportsGames[] {
+    return sports.sports.map(sport => ({
+      __typename: sport.__typename,
+      id: sport.id,
+      slug: sport.slug,
+      name: sport.name,
+      sportId: sport.sportId,
+      games: sport.countries.flatMap(country => 
+        country.leagues.flatMap(league => 
+          league.games.map(game => ({
+            __typename: game.__typename,
+            id: game.id
+          }))
+        )
+      )
+    }))
+  }
