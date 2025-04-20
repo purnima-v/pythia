@@ -4,7 +4,7 @@ import { ActiveLink } from './ActiveLink'
 
 import { LiveSwitcher, SelectAppChain } from '@/components'
 import { ConnectWalletButton } from './connectWallet'
-import { CreateNewBet } from './CreateNewBet'
+import { CreateNewBet } from './Bets/CreateNewBet'
 
 import * as Logo from '@/assets/logo.png'
 

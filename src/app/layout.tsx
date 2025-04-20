@@ -7,7 +7,7 @@ import { Providers } from '../app/Providers';
 
 import { cookies } from 'next/headers'
 import { Betslip, BetsSummary, FootBar, NavBar } from '@/components'
-import { CreateNewBet } from "@/components/Display/CreateNewBet";
+import { CreateNewBet } from "@/components/Display/Bets/CreateNewBet";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",

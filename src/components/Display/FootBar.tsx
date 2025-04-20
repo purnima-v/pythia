@@ -3,7 +3,7 @@ import React from 'react'
 
 
 import { Betslip, BetsSummary } from '@/components'
-import { CreateNewBet } from './CreateNewBet'
+import { CreateNewBet } from './Bets/CreateNewBet'
 
 export function FootBar() {
   

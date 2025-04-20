@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { useBets } from '../betContext'
+import { useBets } from '@/components'
 
 type BetFormData = {
   title: string

@@ -1,5 +1,5 @@
 'use client'
-import { useBets } from '../betContext'
+import { useBets } from '@/components'
 
 export function DisplayBets() {
   const { bets } = useBets()

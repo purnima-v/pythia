@@ -1,5 +1,5 @@
 'use client'
-import { DisplayBets } from '@/components/Display/DisplayBets'
+import { DisplayBets } from '@/components/Display/Bets/DisplayBets'
 import { useBets } from '@/components/betContext'
 
 export default function SomePage() {
