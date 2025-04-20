@@ -7,7 +7,7 @@ import { WagmiProvider } from 'wagmi'
 import { AzuroSDKProvider, LiveProvider } from '@azuro-org/sdk'
 import { ChainId } from '@azuro-org/toolkit';
 
-import { BetProvider } from '@/components/betContext'
+import { BetProvider } from '@/components/Display/Bets/betContext'
 import { BetslipProvider } from '@/components/Azuro_SDK/context/betslip'
 import { BetSummaryProvider } from '@/components/Azuro_SDK/context/betsummary'
 import { Address } from 'viem';

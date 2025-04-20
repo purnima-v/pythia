@@ -10,12 +10,14 @@ type BetFormData = {
 
 export function CreateNewBet() {
   const [isOpen, setIsOpen] = useState(false)
-  const { addBet, isLoading } = useBets()
   const [formData, setFormData] = useState<BetFormData>({
     title: '',
     amount: '',
     description: ''
   })
+
+  const { addBet, isLoading } = useBets()
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

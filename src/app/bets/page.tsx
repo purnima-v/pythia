@@ -1,6 +1,6 @@
 'use client'
 import { DisplayBets } from '@/components/Display/Bets/DisplayBets'
-import { useBets } from '@/components/betContext'
+import { useBets } from '@/components/Display/Bets/betContext'
 
 export default function SomePage() {
   const { bets } = useBets()
