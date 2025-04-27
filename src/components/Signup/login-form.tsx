@@ -19,6 +19,8 @@ import { Label } from '@/lib/ui/label'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+
+
 export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,6 +30,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   
   const [code, setCode] = useState("");
   const { sendCode, loginWithCode } = useLoginWithEmail();
+
+  const {ready, authenticated} = usePrivy();
   
   type OtpFlowState =
   | {status: 'initial'}
@@ -39,22 +43,35 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   const [otpFlowState, setOtpFlowState] = useState<OtpFlowState>({status: 'initial'});
 
-  useEffect(() => {
-    if (otpFlowState.status === 'sending-code') {
-      sendCode({ email })
-        .then(() => {
-          setOtpFlowState({status: 'awaiting-code-input'});
-        })
-        .catch((error) => {
-          setOtpFlowState({status: 'error', error});
-        });
-    }
-  }, [otpFlowState.status, email, sendCode]);
+  // useEffect(() => {
+  //   if (otpFlowState.status === 'sending-code') {
+  //     sendCode({ email })
+  //       .then(() => {
+  //         setOtpFlowState({status: 'awaiting-code-input'});
+  //       })
+  //       .catch((error) => {
+  //         setOtpFlowState({status: 'error', error});
+  //       });
+  //   }
+  // }, [otpFlowState.status, email, sendCode]);
 
-  const handleSendCode = () => {
+  useEffect(() => {
+    if (authenticated) {
+      console.log('User is authenticated');
+      router.push('/home')
+    }
+  }, [ready])
+
+
+  const handleSendCode = async (email: string) => {
     setIsLoading(true);
     setError(null);
     setOtpFlowState({status: 'sending-code'});
+    
+    sendCode({email})
+
+    setOtpFlowState({status: 'awaiting-code-input'});
+    setIsLoading(false);
   };
 
   const handleLoginWithCode = async () => {
@@ -64,6 +81,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       console.log('Login successful');
       setError(null);
       setIsLoading(false);
+
+      router.push('/home')
     } catch (error: any) {
       setError("Login failed. Please check your code and try again.");
       setIsLoading(false);
@@ -75,8 +94,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your email to receive a login code</CardDescription>
+          <CardDescription>We're using privy to log in. Please enter the email of your privy account to receive a login code!</CardDescription>
         </CardHeader>
+        
         <CardContent>
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
@@ -84,14 +104,16 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="Enter your email"
+                // className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
+
               <Button 
-                onClick={handleSendCode}
-                className="mt-2"
+                onClick={() => handleSendCode(email)}
+                className="mt-2 hover:cursor-pointer"
                 disabled={isLoading || !email}
               >
                 {isLoading && otpFlowState.status === 'sending-code' ? 'Sending...' : 'Send Code'}
@@ -132,63 +154,6 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
     </div>
   );
 }
-
-
-  // return (
-  //   <div className={'flex flex-col gap-6'} {...props}>
-  //     <Card>
-  //       <CardHeader>
-  //         <CardTitle className="text-2xl">Login</CardTitle>
-  //         <CardDescription>Enter your email below to login to your account</CardDescription>
-  //       </CardHeader>
-  //       <CardContent>
-  //         <form onSubmit={handleLogin}>
-  //           <div className="flex flex-col gap-6">
-  //             <div className="grid gap-2">
-  //               <Label htmlFor="email">Email</Label>
-  //               <Input
-  //                 id="email"
-  //                 type="email"
-  //                 placeholder="m@example.com"
-  //                 required
-  //                 value={email}
-  //                 onChange={(e) => setEmail(e.target.value)}
-  //               />
-  //             </div>
-  //             <div className="grid gap-2">
-  //               <div className="flex items-center">
-  //                 <Label htmlFor="password">Password</Label>
-  //                 <Link
-  //                   href="/auth/forgot-password"
-  //                   className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-  //                 >
-  //                   Forgot your password?
-  //                 </Link>
-  //               </div>
-  //               <Input
-  //                 id="password"
-  //                 type="password"
-  //                 required
-  //                 value={password}
-  //                 onChange={(e) => setPassword(e.target.value)}
-  //               />
-  //             </div>
-  //             {error && <p className="text-sm text-red-500">{error}</p>}
-  //             <Button type="submit" className="w-full" disabled={isLoading}>
-  //               {isLoading ? 'Logging in...' : 'Login'}
-  //             </Button>
-  //           </div>
-  //           <div className="mt-4 text-center text-sm">
-  //             Don&apos;t have an account?{' '}
-  //             <Link href="/auth/sign-up" className="underline underline-offset-4">
-  //               Sign up
-  //             </Link>
-  //           </div>
-  //         </form>
-  //       </CardContent>
-  //     </Card>
-  //   </div>
-
 // =========
 
 

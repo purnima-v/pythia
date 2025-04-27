@@ -1,137 +1,230 @@
-// 'use client'
+'use client'
 
-// import { cn } from '@/lib/utils'
-// import { createClient } from '@/lib/supabase/client'
-// import { Button } from '@/components/ui/button'
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle,
-// } from '@/components/ui/card'
-// import { Input } from '@/components/ui/input'
-// import { Label } from '@/components/ui/label'
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from '@/components/ui/select'
-// import Link from 'next/link'
-// import { useRouter } from 'next/navigation'
-// import { useState } from 'react'
+// import { useImportWallet, useSignAuthorization } from '@privy-io/react-auth';
+// import { useState, useEffect } from 'react';
 
-// export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-//   const [email, setEmail] = useState('')
-//   const [password, setPassword] = useState('')
-//   const [repeatPassword, setRepeatPassword] = useState('')
-//   const [type, setType] = useState<'candidate' | 'recruiter'>('candidate')
-//   const [error, setError] = useState<string | null>(null)
-//   const [isLoading, setIsLoading] = useState(false)
-//   const router = useRouter()
+import { useLogin, usePrivy, useLogout } from '@privy-io/react-auth';
+import { useSignupWithPasskey } from "@privy-io/react-auth";
+import { useState, useEffect } from'react';
 
-//   const handleSignUp = async (e: React.FormEvent) => {
-//     e.preventDefault()
-//     const supabase = createClient()
-//     setIsLoading(true)
-//     setError(null)
+import { Button } from '@/lib/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/lib/ui/card'
+import { Input } from '@/lib/ui/input'
+import { Label } from '@/lib/ui/label'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
-//     if (password !== repeatPassword) {
-//       setError('Passwords do not match')
-//       setIsLoading(false)
-//       return
-//     }
 
+export default function SignupWithPasskey() {
+  const { signupWithPasskey } = useSignupWithPasskey();
+
+  return (
+    <div>
+      <button onClick={signupWithPasskey}>Sign up with passkey</button>
+    </div>
+  );
+}
+
+
+
+export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  
+  const [code, setCode] = useState("");
+  
+
+  const {ready, authenticated} = usePrivy();
+  const { signupWithPasskey } = useSignupWithPasskey();
+
+
+  
+  type OtpFlowState =
+  | {status: 'initial'}
+  | {status: 'error'; error: Error | null}
+  | {status: 'sending-code'}
+  | {status: 'awaiting-code-input'}
+  | {status: 'submitting-code'}
+  | {status: 'done'};
+
+  const [otpFlowState, setOtpFlowState] = useState<OtpFlowState>({status: 'initial'});
+
+  // useEffect(() => {
+  //   if (otpFlowState.status === 'sending-code') {
+  //     sendCode({ email })
+  //       .then(() => {
+  //         setOtpFlowState({status: 'awaiting-code-input'});
+  //       })
+  //       .catch((error) => {
+  //         setOtpFlowState({status: 'error', error});
+  //       });
+  //   }
+  // }, [otpFlowState.status, email, sendCode]);
+
+  useEffect(() => {
+    if (authenticated) {
+      console.log('User is authenticated');
+      router.push('/home')
+    }
+  }, [ready])
+
+
+//   const handleSendCode = async (email: string) => {
+//     setIsLoading(true);
+//     setError(null);
+//     setOtpFlowState({status: 'sending-code'});
+    
+//     sendCode({email})
+
+//     setOtpFlowState({status: 'awaiting-code-input'});
+//     setIsLoading(false);
+//   };
+
+//   const handleLoginWithCode = async () => {
 //     try {
-//       const { error } = await supabase.auth.signUp({
-//         email,
-//         password,
-//         options: {
-//           emailRedirectTo: `${window.location.origin}/protected`,
-//         },
-//       })
+//       setIsLoading(true);
+//       await loginWithCode({ code });
+//       console.log('Login successful');
+//       setError(null);
+//       setIsLoading(false);
 
-//       if (error) throw error
-
-//       const res = await fetch('/api/onboarding', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ type }),
-//       })
-
-//       if (!res.ok) {
-//         const { message } = await res.json()
-//         throw new Error(message || 'Failed to initialize onboarding')
-//       }
-
-//       router.push('/auth/sign-up-success')
+//       router.push('/home')
 //     } catch (error: any) {
-//       setError(error?.message || 'Something went wrong')
-//     } finally {
-//       setIsLoading(false)
+//       setError("Login failed. Please check your code and try again.");
+//       setIsLoading(false);
 //     }
-//   }
+//   };
+
+  return (
+    <div className={'flex flex-col gap-6'} {...props}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardDescription>We're using privy to log in. Please enter the email of your privy account to receive a login code!</CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="flex flex-col gap-6">
+            {/* <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                // className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+
+              <Button 
+                onClick={() => handleSendCode(email)}
+                className="mt-2 hover:cursor-pointer"
+                disabled={isLoading || !email}
+              >
+                {isLoading && otpFlowState.status === 'sending-code' ? 'Sending...' : 'Send Code'}
+              </Button>
+            </div> */}
+            
+            {/* {otpFlowState.status === 'awaiting-code-input' && ( */}
+              <div className="grid gap-2">
+                <Label htmlFor="code">Verification Code</Label>
+                <Input
+                  id="code"
+                  type="text"
+                  placeholder="Enter verification code"
+                  required
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                />
+                <Button 
+                  onClick={signupWithPasskey}
+                  className="mt-2"
+                  disabled={isLoading || !code}
+                >
+                  {isLoading ? 'Creating account...' : 'Sign Up'}
+                </Button>
+              </div>
+            {/* )} */}
+            
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+          {/* <div className="mt-4 text-center text-sm">
+            Don&apos;t have an account?{' '}
+            <Link href="/auth/sign-up" className="underline underline-offset-4">
+              Sign up
+            </Link>
+          </div> */}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+// =========
+
+
+
+
+// function ImportWalletButton() {
+//   const {ready, authenticated} = usePrivy();
+//   const {importWallet} = useImportWallet();
+//   const [privateKey, setPrivateKey] = useState('hello');
+//   const [isReady, setIsReady] = useState(false);
+
+//   // Make sure Privy is ready before attempting to use its functions
+//   useEffect(() => {
+//     if (ready) {
+//       setIsReady(true);
+//     }
+//   }, [ready]);
+
+//   // useSignAuthorization()
+
+  
+
+//   const handleImport = async () => {
+//     if (!isReady) {
+//       console.error('Privy is not ready yet');
+//       return;
+//     }
+    
+//     try {
+//       console.log('Attempting to import wallet with private key:', privateKey);
+//       const wallet = await importWallet({privateKey: privateKey});
+//       console.log('Wallet imported successfully:', wallet);
+//     } catch (error) {
+//       console.error('Failed to import wallet:', error);
+//     }
+//   };
+
+//   // Check that your user is authenticated
+//   const isAuthenticated = ready && authenticated;
 
 //   return (
-//     <div className={cn('flex flex-col gap-6', className)} {...props}>
-//       <Card>
-//         <CardHeader>
-//           <CardTitle className="text-2xl">Sign up</CardTitle>
-//           <CardDescription>Create a new account</CardDescription>
-//         </CardHeader>
-//         <CardContent>
-//           <form onSubmit={handleSignUp} className="flex flex-col gap-6">
-//             <div className="grid gap-2">
-//               <Label htmlFor="email">Email</Label>
-//               <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-//             </div>
+//     <div className='flex flex-col items-center justify-center'>
 
-//             <div className="grid gap-2">
-//               <Label htmlFor="password">Password</Label>
-//               <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-//             </div>
-
-//             <div className="grid gap-2">
-//               <Label htmlFor="repeat-password">Repeat Password</Label>
-//               <Input id="repeat-password" type="password" value={repeatPassword} onChange={e => setRepeatPassword(e.target.value)} required />
-//             </div>
-
-//             <div className="grid gap-2">
-//               <Label htmlFor="account-type">Account Type</Label>
-//               <Select
-//                 value={type}
-//                 onValueChange={(value) => setType(value as 'candidate' | 'recruiter')}
-//               >
-//                 <SelectTrigger id="account-type" className="w-full">
-//                   <SelectValue placeholder="Select account type" />
-//                 </SelectTrigger>
-//                 <SelectContent>
-//                   <SelectItem value="candidate">Candidate</SelectItem>
-//                   <SelectItem value="recruiter" disabled>
-//                     <span className="flex items-center gap-2">
-//                       Recruiter <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Coming soon</span>
-//                     </span>
-//                   </SelectItem>
-//                 </SelectContent>
-//               </Select>
-//             </div>
-
-//             {error && <p className="text-sm text-red-500">{error}</p>}
-//             <Button type="submit" disabled={isLoading}>
-//               {isLoading ? 'Creating account...' : 'Sign up'}
-//             </Button>
-
-//             <div className="text-center text-sm mt-4">
-//               Already have an account?{' '}
-//               <Link href="/auth/login" className="underline">
-//                 Login
-//               </Link>
-//             </div>
-//           </form>
-//         </CardContent>
-//       </Card>
+//       {/* <input
+//         type="text"
+//         value={privateKey}
+//         onChange={(e) => setPrivateKey(e.target.value)}
+//         placeholder="Enter your private key"
+//       />
+//       <button 
+//         onClick={handleImport}
+//         className='cursor-pointer' 
+//         disabled={!isReady}
+//       >
+//         Import my wallet
+//       </button> */}
 //     </div>
-//   )
-// }
+//   );
+// }}

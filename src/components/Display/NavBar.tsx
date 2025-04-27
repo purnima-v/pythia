@@ -7,6 +7,7 @@ import { ConnectWalletButton } from './connectWallet'
 import { CreateNewBet } from './Bets/CreateNewBet'
 
 import * as Logo from '@/assets/logo.png'
+import { LogoutButton } from '../Signup/logout-button'
 
 export function NavBar() {
   const links = [
@@ -40,6 +41,7 @@ export function NavBar() {
         <LiveSwitcher />
         <SelectAppChain />
         <ConnectWalletButton />
+        <LogoutButton/>
       </div>
     </div>
   )
