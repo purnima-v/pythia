@@ -10,7 +10,7 @@ import * as Logo from '@/assets/logo.png'
 
 export function NavBar() {
   const links = [
-    { href: '/', label: 'Home' },
+    { href: '/home', label: 'Home' },
     { href: '/events/top', label: 'Events', regex: '^/events(/|$)' }, // Regex for /events/*
     { href: '/bets', label: 'Bets' },
   ]
