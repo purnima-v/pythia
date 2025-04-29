@@ -39,6 +39,7 @@ const wagmiConfig = getDefaultConfig({
   ssr: false,
 })
 
+
 const queryClient = new QueryClient()
 
 type ProvidersProps = {
@@ -54,8 +55,22 @@ export function Providers(props: ProvidersProps) {
   const chainId = initialChainId &&
                   chains.find(chain => chain.id === +initialChainId) ? +initialChainId as ChainId : polygonAmoy.id
 
-  // console.log(clientid)
-  // console.log(appid)
+  // Add useEffect to handle EventEmitter listeners
+  // useEffect(() => {
+  //   // Increase max listeners to avoid warning
+  //   if (typeof window !== 'undefined') {
+  //     // @ts-ignore - EventEmitter exists on window in this context
+  //     window.EventEmitter?.defaultMaxListeners = 20;
+  //   }
+
+  //   // Cleanup function
+  //   return () => {
+  //     if (typeof window !== 'undefined') {
+  //       // @ts-ignore - EventEmitter exists on window in this context
+  //       window.EventEmitter?.defaultMaxListeners = 10;
+  //     }
+  //   };
+  // }, []);
 
   return (
     <WagmiProvider config={wagmiConfig}>
@@ -70,10 +85,13 @@ export function Providers(props: ProvidersProps) {
                       appId={appid!}
                       clientId={clientid!}
                       config={{
-                        // Create embedded wallets for users who don't have a wallet
                         embeddedWallets: {
-                          createOnLogin: 'users-without-wallets'
-                        }
+                          createOnLogin: 'all-users'
+                        },
+                        loginMethods: ['wallet', 'email', 'sms'],
+                        appearance: {
+                          showWalletLoginFirst: true,
+                        },
                       }}
                     >
                       {children}
@@ -86,5 +104,5 @@ export function Providers(props: ProvidersProps) {
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
-  )
+  );
 }
