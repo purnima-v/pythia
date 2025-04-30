@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useWallets } from '@privy-io/react-auth';
 import { optimism, optimismSepolia, sepolia, mainnet } from 'viem/chains';
 
-interface ChainSelectorProps {
-  onChainChange: (chain: any) => void;
-}
+// interface ChainSelectorProps {
+//   onChainChange: (chain: any) => void;
+// }
 
-export function ChainSelector({ onChainChange }: ChainSelectorProps) {
+export function ChainSelector(
+  // { onChainChange }: ChainSelectorProps
+) {
   const { wallets } = useWallets();
   const [selectedChain, setSelectedChain] = useState(0);
   const [switching, setSwitching] = useState(false);
@@ -32,7 +34,7 @@ export function ChainSelector({ onChainChange }: ChainSelectorProps) {
         throw new Error('Unsupported chain');
       }
       
-      onChainChange(chain);
+      // onChainChange(chain);
     } catch (err: any) {
       setError(err.message || 'Failed to switch network');
     } finally {

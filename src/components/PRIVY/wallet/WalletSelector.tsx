@@ -1,19 +1,25 @@
 'use client'
 
+import { ConnectedWallet } from "@privy-io/react-auth";
+
 interface WalletSelectorProps {
   wallets: any[];
   selectedWalletAddress: string;
-  onWalletSelect: (address: string) => void;
+  onWalletSelect: (wallet: ConnectedWallet) => void;
 }
 
 export function WalletSelector({ wallets, selectedWalletAddress, onWalletSelect }: WalletSelectorProps) {
+
   return (
-    <div className="flex flex-col gap-4 w-1/2">
+    <div className="flex flex-col gap-4 w-full">
       <select
         value={selectedWalletAddress}
-        onChange={(e) => onWalletSelect(e.target.value)}
+        onChange={(e) => {
+          const selectedWallet = wallets.find(wallet => wallet.address === e.target.value);
+          onWalletSelect(selectedWallet);
+        }}
         disabled={!wallets.length}
-        className="p-2 border rounded-md bg-orange-400"
+        className="p-2 border rounded-md bg-[#1a202c] text-white border-[#4b5563] hover:border-[#6b7280] transition-colors duration-200"
       >
         <option value="">Select a wallet</option>
         {wallets.map((wallet) => (

@@ -56,21 +56,21 @@ export function Providers(props: ProvidersProps) {
                   chains.find(chain => chain.id === +initialChainId) ? +initialChainId as ChainId : polygonAmoy.id
 
   // Add useEffect to handle EventEmitter listeners
-  // useEffect(() => {
-  //   // Increase max listeners to avoid warning
-  //   if (typeof window !== 'undefined') {
-  //     // @ts-ignore - EventEmitter exists on window in this context
-  //     window.EventEmitter?.defaultMaxListeners = 20;
-  //   }
+  useEffect(() => {
+    // Increase max listeners to avoid warning
+    if (typeof window !== 'undefined') {
+      // @ts-ignore - EventEmitter exists on window in this context
+      window.EventEmitter?.defaultMaxListeners = 20;
+    }
 
-  //   // Cleanup function
-  //   return () => {
-  //     if (typeof window !== 'undefined') {
-  //       // @ts-ignore - EventEmitter exists on window in this context
-  //       window.EventEmitter?.defaultMaxListeners = 10;
-  //     }
-  //   };
-  // }, []);
+    // Cleanup function
+    return () => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore - EventEmitter exists on window in this context
+        window.EventEmitter?.defaultMaxListeners = 10;
+      }
+    };
+  }, []);
 
   return (
     <WagmiProvider config={wagmiConfig}>
@@ -88,10 +88,10 @@ export function Providers(props: ProvidersProps) {
                         embeddedWallets: {
                           createOnLogin: 'all-users'
                         },
-                        loginMethods: ['wallet', 'email', 'sms'],
-                        appearance: {
-                          showWalletLoginFirst: true,
-                        },
+                        // Add this to prevent multiple initializations
+                        walletConnectV2: {
+                          skipInitializationIfConnected: true
+                        }
                       }}
                     >
                       {children}

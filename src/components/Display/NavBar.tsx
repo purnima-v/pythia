@@ -47,10 +47,7 @@ export function NavBar() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <Web3DashboardButton 
-            buttonText="Wallet" 
-            buttonClassName="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-md text-white font-medium shadow-sm hover:shadow-md transition-all duration-200 text-sm border border-purple-400/20"
-          />
+          <Web3DashboardButton/>
           
           <div className="px-2 py-1 bg-slate-800/70 hover:bg-slate-700/70 rounded-md transition-colors duration-200 shadow-sm border border-purple-500/20">
             <LiveSwitcher />
