@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import '@rainbow-me/rainbowkit/styles.css';
 
-import { Providers } from '../app/Providers';
+import { Providers } from './Providers';
 
 import { cookies } from 'next/headers'
 import { FootBar, NavBar } from '@/components'

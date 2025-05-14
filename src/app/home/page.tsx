@@ -5,15 +5,15 @@ import { useState } from 'react';
 import { sepolia } from 'viem/chains';
 import { createWalletClient, custom, type Hex } from 'viem';
 import { useAccount, useDisconnect } from 'wagmi';
-import { ChainSelector } from '@/components/PRIVY/wallet/ChainSelector';
-import { ConnectWalletButton } from '@/components/PRIVY/wallet/ConnectWalletButton';
-import { ImportWalletButton } from '@/components/PRIVY/wallet/ImportWalletButton';
-import { WalletSelector } from '@/components/PRIVY/wallet/WalletSelector';
+import { ChainSelector } from '@/components/Wallet/Dashboard/ChainSelector';
+// import { ConnectWalletButton } from '@/components/PRIVY/wallet/ConnectWalletButton';
+import { ImportWalletButton } from '@/components/Wallet/Dashboard/ImportWalletButton';
+import { WalletSelector } from '@/components/Wallet/Dashboard/WalletSelector';
 import Balance from '@/components/PRIVY/Balance';
 import Signer from '@/components/PRIVY/Signer';
 import SendTransaction from '@/components/PRIVY/SendTransaction';
 import Transaction from '@/components/PRIVY/Transaction';
-import Web3DashboardButton from '@/components/PRIVY/Web3DashboardButton';
+import Web3DashboardButton from '@/components/Wallet/Web3DashboardButton';
 
 // export default function HomePage() {
 //   const { wallets } = useWallets();
@@ -171,7 +171,7 @@ import Web3DashboardButton from '@/components/PRIVY/Web3DashboardButton';
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#0a0e17] p-6 flex flex-col items-center justify-center">
-      {/* <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text mb-8">
+      <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text mb-8">
         Web3 Dashboard Demo
       </h1>
       
@@ -179,7 +179,7 @@ export default function HomePage() {
       
       <p className="mt-6 text-gray-400 max-w-md text-center">
         Click the button above to open the Web3 Dashboard popup. You can connect your wallet, view your balance, and send transactions.
-      </p> */}
+      </p>
     </div>
   );
 }

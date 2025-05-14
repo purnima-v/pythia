@@ -1,10 +1,14 @@
 'use client';
 
 import {useAccount, useBalance} from 'wagmi';
+import { useAddress } from '../Wallet/wallet_context/addressContext';
 
 const Balance = () => {
-  const {address} = useAccount();
-  const {data, isError, isLoading} = useBalance({address});
+  const {selectedAddress} = useAddress();
+  const {data, isError, isLoading} = useBalance({
+    address: `0x${selectedAddress}`
+  });
+
 
   if (isLoading) return <div>Fetching balance…</div>;
   if (isError) return <div>Error fetching balance</div>;

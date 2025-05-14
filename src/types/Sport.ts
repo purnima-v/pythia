@@ -53,6 +53,33 @@ export type GameQuery = {
     }>;
 };
 
+export declare enum ConditionStatus {
+    Canceled = "Canceled",
+    Created = "Created",
+    Paused = "Paused",
+    Resolved = "Resolved"
+}
+
+export type MarketOutcome = {
+    selectionName: string;
+    odds?: number;
+    lpAddress: string;
+    coreAddress: string;
+    status: ConditionStatus;
+    gameId: string;
+    isExpressForbidden: boolean;
+    margin?: string;
+    isWon?: boolean;
+} & Selection;
+
+export type Market = {
+    marketKey: string;
+    name: string;
+    description: string;
+    outcomeRows: MarketOutcome[][];
+};
+export type GameMarkets = Market[];
+
 
 // You can also export the type from here
 export type SportsQuery = {
@@ -104,6 +131,48 @@ export type SportsQuery = {
                     }>;
                 }>;
             }>;
+        }>;
+    }>;
+};
+
+
+
+
+
+
+
+
+// GamesQuery
+
+export type GamesQuery = {
+    __typename?: 'Query';
+    games: Array<{
+        __typename?: 'Game';
+        id: string;
+        gameId: string;
+        title?: string | null;
+        startsAt: string;
+        status: GameStatus;
+        sport: {
+            __typename?: 'Sport';
+            sportId: string;
+            slug: string;
+            name: string;
+        };
+        league: {
+            __typename?: 'League';
+            slug: string;
+            name: string;
+            country: {
+                __typename?: 'Country';
+                slug: string;
+                name: string;
+            };
+        };
+        participants: Array<{
+            __typename?: 'Participant';
+            image?: string | null;
+            name: string;
         }>;
     }>;
 };

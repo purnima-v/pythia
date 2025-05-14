@@ -2,15 +2,17 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RainbowKitProvider, getDefaultWallets, getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { polygonAmoy, gnosis, polygon, chiliz, spicy } from 'wagmi/chains'
+import { polygonAmoy, gnosis, polygon, chiliz, spicy, optimism, optimismSepolia, mainnet, sepolia } from 'wagmi/chains'
 import { WagmiProvider } from 'wagmi'
 import { AzuroSDKProvider, LiveProvider } from '@azuro-org/sdk'
 import { ChainId } from '@azuro-org/toolkit';
 import { PrivyProvider } from '@privy-io/react-auth';
 
-import { BetProvider } from '@/components/Display/Bets/betContext'
-import { BetslipProvider } from '@/components/Azuro_SDK/context/betslip'
-import { BetSummaryProvider } from '@/components/Azuro_SDK/context/betsummary'
+import { AddressProvider } from '@/components'
+import { EmbeddedProvider } from '@/components'
+import { BetProvider } from '@/components/Bets/betContext'
+import { BetslipProvider } from '../../archieve/Azuro_SDK/context/betslip'
+import { BetSummaryProvider } from '../../archieve/Azuro_SDK/context/betsummary'
 import { Address } from 'viem';
 
 import 'dotenv'
@@ -29,7 +31,12 @@ const chains = [
   polygon,
   chiliz,
   spicy,
+  optimism,
+  optimismSepolia, 
+  mainnet, 
+  sepolia
 ] as const
+
 
 const wagmiConfig = getDefaultConfig({
   appName: 'Pythia',
@@ -56,51 +63,55 @@ export function Providers(props: ProvidersProps) {
                   chains.find(chain => chain.id === +initialChainId) ? +initialChainId as ChainId : polygonAmoy.id
 
   // Add useEffect to handle EventEmitter listeners
-  useEffect(() => {
-    // Increase max listeners to avoid warning
-    if (typeof window !== 'undefined') {
-      // @ts-ignore - EventEmitter exists on window in this context
-      window.EventEmitter?.defaultMaxListeners = 20;
-    }
+  // React.useEffect(() => {
+  //   // Increase max listeners to avoid warning
+  //   if (typeof window !== 'undefined') {
+  //     // @ts-ignore - EventEmitter exists on window in this context
+  //     window.EventEmitter.defaultMaxListeners = 20;
+  //   }
 
-    // Cleanup function
-    return () => {
-      if (typeof window !== 'undefined') {
-        // @ts-ignore - EventEmitter exists on window in this context
-        window.EventEmitter?.defaultMaxListeners = 10;
-      }
-    };
-  }, []);
+  //   // Cleanup function
+  //   return () => {
+  //     if (typeof window !== 'undefined') {
+  //       // @ts-ignore - EventEmitter exists on window in this context
+  //       window.EventEmitter.defaultMaxListeners = 10;
+  //     }
+  //   };
+  // }, []);
 
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <AzuroSDKProvider initialChainId={chainId} isBatchBetWithSameGameEnabled affiliate={process.env.NEXT_PUBLIC_AFFILIATE_ADDRESS as Address}>
+          {/* <AzuroSDKProvider initialChainId={chainId} isBatchBetWithSameGameEnabled affiliate={process.env.NEXT_PUBLIC_AFFILIATE_ADDRESS as Address}>
             <BetslipProvider>
-              <BetSummaryProvider>
+              <BetSummaryProvider> */}
                 <BetProvider>
-                  <LiveProvider initialLiveState={initialLiveState}>
-                    <PrivyProvider
-                      appId={appid!}
-                      clientId={clientid!}
-                      config={{
-                        embeddedWallets: {
-                          createOnLogin: 'all-users'
-                        },
-                        // Add this to prevent multiple initializations
-                        walletConnectV2: {
-                          skipInitializationIfConnected: true
-                        }
-                      }}
-                    >
-                      {children}
-                    </PrivyProvider>
-                  </LiveProvider>
+                  {/* <LiveProvider initialLiveState={initialLiveState}> */}
+                  <AddressProvider>
+                    <EmbeddedProvider>
+                      <PrivyProvider
+                        appId={appid!}
+                        clientId={clientid!}
+                        config={{
+                          embeddedWallets: {
+                            createOnLogin: 'all-users'
+                          },
+                          loginMethods: ['wallet', 'email', 'sms'],
+                          appearance: {
+                            showWalletLoginFirst: true
+                          }
+                        }}
+                      >
+                        {children}
+                      </PrivyProvider>
+                    {/* </LiveProvider> */}
+                    </EmbeddedProvider>
+                  </AddressProvider>
                 </BetProvider>
-              </BetSummaryProvider>
+              {/* </BetSummaryProvider>
             </BetslipProvider>
-          </AzuroSDKProvider>
+          </AzuroSDKProvider> */}
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

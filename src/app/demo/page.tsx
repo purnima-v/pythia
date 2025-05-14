@@ -1,5 +1,5 @@
 'use client'
-import { DisplayBets } from '@/components/Bets/DisplayBets'
+import Home from '@/components/PRIVY/privy'
 import { useBets } from '@/components/Bets/betContext'
 
 export default function SomePage() {
@@ -8,7 +8,7 @@ export default function SomePage() {
   return (
     <div>
       {/* other content */}
-      <DisplayBets />
+      <Home />
     </div>
   )
 }
