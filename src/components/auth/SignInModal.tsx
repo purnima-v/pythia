@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePrivy } from '@privy-io/react-auth';
+import {createConfig} from '@privy-io/wagmi';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -35,11 +36,6 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => {
 
         {authenticated ? (
           <div className="space-y-4">
-            <div className="p-4 bg-gray-50 dark:bg-poseidon-deep-blue rounded-lg">
-              <p className="text-sm text-gray-600 dark:text-poseidon-muted-text">
-                Connected as: {user?.email?.address || user?.wallet?.address}
-              </p>
-            </div>
             <button
               onClick={handleLogout}
               className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
@@ -79,12 +75,12 @@ const SignInModal: React.FC<SignInModalProps> = ({ isOpen, onClose }) => {
               </svg>
               <span>Continue with Google</span>
             </button>
+
+            <p className="mt-6 text-sm text-center text-gray-500 dark:text-poseidon-muted-text">
+              By continuing, you agree to our Terms of Service and Privacy Policy
+            </p>
           </div>
         )}
-
-        <p className="mt-6 text-sm text-center text-gray-500 dark:text-poseidon-muted-text">
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </p>
       </div>
     </div>
   );

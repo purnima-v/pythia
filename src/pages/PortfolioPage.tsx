@@ -1,6 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMode } from '../components/pythia/Layout';
 import { Link } from 'react-router-dom'; // For linking to market detail pages
+import { useAccount } from 'wagmi';
+import { PAIR_ABI } from '../contracts/ABIs';
+import { readContract } from 'viem/actions';
+import { config } from '../wagmi.config';
+
+//const [payout, setPayout]= useState(0);
+
+//const {address} = useAccount();
 
 interface PortfolioPosition {
   id: string;
@@ -70,6 +78,34 @@ const summaryStats = {
   resolvedPositions: 2,
 };
 
+/*const handleClaimPayout = async (marketId: string) => {a
+  console.log('Claiming payout for market:', marketId);
+  try {
+    const ids = await readContract(config, {
+      address: marketId as `0x${string}`,
+      abi: PAIR_ABI,
+      functionName: 'traderToPositionIDs',
+      args: [address]
+    });
+
+    const firstIdBig = ids[0];
+
+    const tempPayout = await readContract(config, {
+      address: marketId as `0x${string}`,
+      abi: PAIR_ABI,
+      functionName: 'settlePosition',
+      args: [firstIdBig, address]
+    })
+    setPayout(tempPayout);
+
+    console.log('Payout:', payout);
+
+  } catch (error) {
+    console.error('Error claiming payout:', error);
+  }
+};
+*/
+
 export default function PortfolioPage() {
   const { mode } = useMode();
 
@@ -88,7 +124,7 @@ export default function PortfolioPage() {
   const resolvedMarkets = mockPortfolioData.filter(p => p.status === 'Resolved');
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor} min-h-full font-serif`}>
+    <div className={`p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor} min-h-full font-['Readex Pro']`}>
       <div className="max-w-5xl mx-auto">
         <h1 className={`text-4xl font-bold mb-8 text-center ${headerTextColor}`}>My Portfolio</h1>
 
@@ -132,19 +168,27 @@ export default function PortfolioPage() {
           {resolvedMarkets.length > 0 ? (
             <div className="space-y-4">
               {resolvedMarkets.map((position) => (
-                <div key={position.id} className={`p-4 rounded-lg shadow-md ${cardBgColor} border ${cardBorderColor}`}>
-                  <Link to={`/market/${position.marketId}`} className={`text-lg font-semibold hover:underline ${textColor}`}>
-                    {position.marketQuestion}
-                  </Link>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-sm">
-                    <div><span className={mutedTextColor}>Stake:</span> {position.stake}</div>
-                    <div><span className={mutedTextColor}>Outcome:</span> {position.outcome}</div>
-                    <div><span className={mutedTextColor}>P&L:</span> 
-                      <span className={`${position.pnl?.startsWith('+') ? positivePnlColor : negativePnlColor} font-semibold`}>
-                        {position.pnl}
-                      </span>
+                <div key={position.id} className={`p-4 rounded-lg shadow-md ${cardBgColor} border ${cardBorderColor} flex items-center justify-between`}>
+                  <div>
+                    <Link to={`/market/${position.marketId}`} className={`text-lg font-semibold hover:underline ${textColor}`}>
+                      {position.marketQuestion}
+                    </Link>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-sm">
+                      <div><span className={mutedTextColor}>Stake:</span> {position.stake}</div>
+                      <div><span className={mutedTextColor}>Outcome:</span> {position.outcome}</div>
+                      <div><span className={mutedTextColor}>P&L:</span> 
+                        <span className={`${position.pnl?.startsWith('+') ? positivePnlColor : negativePnlColor} font-semibold`}>
+                          {position.pnl}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <button
+                    className="px-4 py-2 rounded bg-blue-600 text-white ml-4 whitespace-nowrap"
+                    onClick={() => alert(`Claim payout for ${position.marketQuestion}`)}
+                  >
+                    Claim Payout
+                  </button>
                 </div>
               ))}
             </div>

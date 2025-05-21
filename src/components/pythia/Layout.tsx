@@ -1,7 +1,11 @@
 import React, { useState, createContext, useContext } from 'react';
 import type { ReactNode } from 'react'; // Type-only import for ReactNode
-import { Link, useLocation } from 'react-router-dom'; // Added Link and useLocation
-import SignInModal from '../auth/SignInModal';
+import { Link, useLocation, useNavigate } from 'react-router-dom'; // Added Link and useLocation
+import { useNotifications } from '../../contexts/NotificationContext';
+import NotificationPopup from '../notifications/NotificationPopup';
+import { mockMarkets } from '../../pages/MarketsPage';
+import type { Market } from '../pythia/MarketCard';
+import { usePrivy } from '@privy-io/react-auth';
 
 // Placeholder SVGs - replace with actual icons
 const SearchIcon = () => (
@@ -48,8 +52,14 @@ export const useMode = () => { // Renamed useTheme to useMode
 export default function Layout({ children }: LayoutProps) {
   const [activeFilter, setActiveFilter] = useState('All');
   const [mode, setMode] = useState<Mode>('pro'); // Default to 'pro' mode
-  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const { notifications, addNotification } = useNotifications();
   const location = useLocation(); // Get current location
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{ id: string; question: string }>>([]);
+  const navigate = useNavigate();
+  const { authenticated, login, logout } = usePrivy();
 
   const toggleMode = () => {
     setMode(prevMode => prevMode === 'pro' ? 'novice' : 'pro');
@@ -70,8 +80,20 @@ export default function Layout({ children }: LayoutProps) {
   const bellIconColor = mode === 'pro' ? 'text-poseidon-muted-text hover:text-poseidon-accent-cyan' : 'text-light-text-muted hover:text-light-accent-primary';
   const xpContainerBg = mode === 'pro' ? 'bg-poseidon-deep-blue/70' : 'bg-gray-200/70';
   const xpTextColor = mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text-main';
-  const walletButtonBg = mode === 'pro' ? 'bg-poseidon-accent-cyan hover:bg-cyan-400' : 'bg-light-accent-primary hover:bg-blue-600';
-  const walletButtonText = mode === 'pro' ? 'text-poseidon-deep-blue' : 'text-white';
+  const walletButtonBg = authenticated 
+    ? mode === 'pro' 
+      ? 'bg-poseidon-accent-cyan hover:bg-cyan-400' 
+      : 'bg-light-accent-primary hover:bg-blue-600'
+    : mode === 'pro'
+      ? 'bg-poseidon-mid-blue hover:bg-poseidon-border'
+      : 'bg-light-bg hover:bg-light-hover';
+  const walletButtonText = authenticated
+    ? mode === 'pro'
+      ? 'text-poseidon-dark-blue'
+      : 'text-white'
+    : mode === 'pro'
+      ? 'text-poseidon-light-text'
+      : 'text-light-text-main';
 
   const filterBarBg = mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-surface';
   const filterButtonBaseText = mode === 'pro' ? 'text-poseidon-muted-text' : 'text-light-text-muted';
@@ -80,6 +102,31 @@ export default function Layout({ children }: LayoutProps) {
   const filterActiveButtonText = mode === 'pro' ? 'text-poseidon-deep-blue' : 'text-white';
   const footerBg = mode === 'pro' ? 'bg-poseidon-mid-blue/50' : 'bg-light-surface/50';
   const footerTextColor = mode === 'pro' ? 'text-poseidon-muted-text' : 'text-light-text-muted';
+
+  // Add some dummy notifications when the component mounts
+  React.useEffect(() => {
+    const dummyNotifications = [
+      {
+        title: 'New Market Created',
+        message: 'A new market "ETH/USD price prediction" has been created',
+        type: 'info' as const,
+      },
+      {
+        title: 'Market Resolved',
+        message: 'Your prediction on "Will BTC reach $100k?" was correct!',
+        type: 'success' as const,
+      },
+      {
+        title: 'Portfolio Update',
+        message: 'Your portfolio value has increased by 15%',
+        type: 'success' as const,
+      },
+    ];
+
+    dummyNotifications.forEach(notification => {
+      addNotification(notification);
+    });
+  }, [addNotification]);
 
   // Update activeFilter based on URL query parameter for category
   React.useEffect(() => {
@@ -93,78 +140,148 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [location.search]);
 
+  // Filter markets based on search query for suggestions
+  const updateSuggestions = (query: string) => {
+    if (query.trim().length === 0) {
+      setSuggestions([]);
+      return;
+    }
+
+    const filtered = mockMarkets
+      .filter((market: Market) => 
+        market.question.toLowerCase().includes(query.toLowerCase())
+      )
+      .slice(0, 5); // Show top 5 matches
+
+    setSuggestions(filtered);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    updateSuggestions(value);
+    setShowSuggestions(true);
+  };
+
+  const handleSuggestionClick = (marketId: string) => {
+    setShowSuggestions(false);
+    navigate(`/market/${marketId}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setShowSuggestions(false);
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  // Close suggestions when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.search-container')) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <ModeContext.Provider value={{ mode, toggleMode }}>
-      <div className={`min-h-screen flex flex-col ${bgColor} ${textColor} font-serif transition-colors duration-300`}>
+      <div className={`min-h-screen flex flex-col ${bgColor} ${textColor} font-sans transition-colors duration-300`}>
         {/* Top Navigation Bar */}
         <nav className={`sticky top-0 z-50 ${navBgColor} shadow-lg`}>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               {/* Logo and Main Links */}
-              <div className="flex items-center space-x-8">
-                <Link to="/" className={`text-3xl font-bold ${logoTextColor} font-serif`}>Pythia</Link>
-                <div className="hidden md:flex items-center space-x-5">
-                  <Link to="/" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-serif`}>
+              <div className="flex items-center">
+                <Link to="/" className={`text-4xl font-bold ${logoTextColor} font-['Uncial Antiqua'] tracking-wider mr-12`}>Pythia</Link>
+                <div className="hidden md:flex items-center space-x-8">
+                  <Link to="/" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
                     Predict
                   </Link>
-                  <Link to="/portfolio" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-serif`}>
+                  <Link to="/portfolio" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
                     Portfolio
                   </Link>
-                  <Link to="/leaderboard" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-serif`}>
+                  <Link to="/leaderboard" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
                     Leaderboard
                   </Link>
-                  <Link to="/oracle" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-serif`}>
+                  <Link to="/oracle" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
                     Oracle
                   </Link>
-                  <Link to="/create-market" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-serif`}>
+                  <Link to="/create-market" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
                     Create Market
                   </Link>
                 </div>
               </div>
 
               {/* Search, Icons, Wallet */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-6">
                 {/* Search Bar */}
-                <div className="relative hidden sm:block">
+                <div className="search-container relative hidden sm:block">
+                  <form onSubmit={handleSearchSubmit}>
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <SearchIcon />
                   </div>
                   <input
                     type="text"
                     placeholder="Search markets..."
-                    className={`block w-full pl-10 pr-3 py-2.5 rounded-lg ${searchBgColor} ${textColor} ${searchPlaceholderColor} focus:ring-2 focus:ring-opacity-50 ${searchRingColor} focus:outline-none transition-colors text-sm`}
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onFocus={() => setShowSuggestions(true)}
+                      className={`block w-[28rem] pl-10 pr-3 py-2.5 rounded-lg ${searchBgColor} ${textColor} ${searchPlaceholderColor} focus:ring-2 focus:ring-opacity-50 ${searchRingColor} focus:outline-none transition-colors text-sm font-sans`}
                   />
+                  </form>
+                  
+                  {/* Search Suggestions Dropdown */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className={`absolute z-50 w-full mt-1 py-1 rounded-lg shadow-lg ${searchBgColor} border ${mode === 'pro' ? 'border-poseidon-mid-blue' : 'border-gray-200'}`}>
+                      {suggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.id}
+                          onClick={() => handleSuggestionClick(suggestion.id)}
+                          className={`w-full px-4 py-2 text-left hover:bg-opacity-10 ${
+                            mode === 'pro' 
+                              ? 'hover:bg-poseidon-accent-cyan text-poseidon-light-text' 
+                              : 'hover:bg-light-accent-primary text-light-text-main'
+                          } transition-colors text-sm font-sans`}
+                        >
+                          {suggestion.question}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Mode Toggle Button */}
                 <button
                   onClick={toggleMode}
-                  className={`p-2 rounded-full ${bgColor} ${modeToggleIconHoverColor} transition-colors`}
+                  className={`px-4 py-2 rounded-lg ${bgColor} ${modeToggleIconHoverColor} transition-colors font-medium text-sm font-sans`}
                   aria-label={mode === 'pro' ? 'Switch to Novice Mode' : 'Switch to Pro Mode'}
                 >
-                  {mode === 'pro' ? 
-                    <SunIcon /> : // In Pro (dark), show Sun to switch to Novice (light)
-                    <MoonIcon />  // In Novice (light), show Moon to switch to Pro (dark)
-                  }
+                  {mode === 'pro' ? 'Novice' : 'Pro'}
                 </button>
 
                 {/* Bell Icon */}
-                <button className={`p-2 rounded-full ${bgColor} ${bellIconColor} transition-colors`}>
+                <button 
+                  className={`p-2 rounded-full ${bgColor} ${bellIconColor} transition-colors relative`}
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                >
                   <BellIcon />
+                  {notifications.length > 0 && (
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
                 </button>
-
-                {/* XP Display */}
-                <div className={`flex items-center ${xpContainerBg} bg-opacity-20 px-3 py-1.5 rounded-lg`}>
-                  <XPIcon />
-                  <span className={`text-sm font-semibold ${xpTextColor}`}>1,250 XP</span>
-                </div>
 
                 {/* Sign In Button */}
                 <button 
-                  onClick={() => setIsSignInModalOpen(true)}
-                  className={`${walletButtonBg} ${walletButtonText} px-5 py-2.5 text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200`}
+                  onClick={authenticated ? logout : login}
+                  className={`${walletButtonBg} ${walletButtonText} px-5 py-2.5 text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-sans`}
                 >
-                  Sign In
+                  {authenticated ? 'Disconnect' : 'Sign In'}
                 </button>
               </div>
             </div>
@@ -173,16 +290,16 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Secondary Filter Tab Bar */}
         <div className={`${filterBarBg} shadow-sm sticky top-20 z-40`}>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center space-x-1 sm:space-x-2 py-3 overflow-x-auto">
+          <div className="w-full">
+            <div className="flex items-center justify-between py-2 overflow-x-auto">
               {filters.map((filter) => (
                 <Link
                   to={filter === 'All' ? '/markets' : `/markets?category=${filter.toLowerCase()}`}
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
-                  className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap
+                  className={`flex-1 text-center px-2 py-1.5 sm:py-2 text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap font-sans
                     ${activeFilter === filter 
-                      ? `${filterActiveButtonBg} ${filterActiveButtonText} shadow-sm`
+                      ? `${filterActiveButtonBg} ${filterActiveButtonText} shadow-sm rounded-lg mx-1`
                       : `${bgColor} ${filterButtonBaseText} ${filterButtonHoverText}`
                     }
                   `}
@@ -195,7 +312,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
         
         {/* Main Content Area */}
-        <main className="flex-grow w-full py-8 px-4 sm:px-6 lg:px-8">
+        <main className="flex-grow w-full py-4 px-4 sm:px-6 lg:px-8">
           {children}
         </main>
 
@@ -206,10 +323,11 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </footer>
 
-        {/* Sign In Modal */}
-        <SignInModal 
-          isOpen={isSignInModalOpen} 
-          onClose={() => setIsSignInModalOpen(false)} 
+        {/* Notification Popup */}
+        <NotificationPopup 
+          isOpen={isNotificationOpen}
+          onClose={() => setIsNotificationOpen(false)}
+          notifications={notifications}
         />
       </div>
     </ModeContext.Provider>

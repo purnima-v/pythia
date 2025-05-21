@@ -1,16 +1,19 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
-import App from './App.tsx'
+import App from './App'
 import { BrowserRouter } from 'react-router-dom'
-import { PrivyProvider } from './providers/PrivyProvider'
+import { Providers } from './providers'
+// import { PrivyProvider } from './providers/PrivyProvider'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <PrivyProvider>
+      <Providers>
+        {/* <PrivyProvider> */}
         <App />
-      </PrivyProvider>
+        {/* </PrivyProvider> */}
+      </Providers>
     </BrowserRouter>
   </React.StrictMode>,
 )

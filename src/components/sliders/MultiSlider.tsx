@@ -63,9 +63,6 @@ const MultiSlider: FC<Props> = ({
 
   const handleValueChange = (newValue: number | number[]) => {
     if (persistedPositionOrigin.current === undefined && !Array.isArray(newValue)) {
-      // If undefined, it means track click, which we might want to ignore or handle specifically.
-      // rc-slider by default moves the closest handle on track click.
-      // For now, let's proceed if it's an array (multi-handle drag or direct set)
       return;
     }
 
@@ -73,15 +70,10 @@ const MultiSlider: FC<Props> = ({
     if (Array.isArray(newValue)) {
       newSliderState = newValue as ControlledValue;
     } else {
-      // This case should ideally not happen if `range` is true and we expect an array.
-      // If it does, it implies a single value update, which is not standard for a 3-point slider.
-      // For safety, we can try to update the closest handle or ignore.
-      // Let's assume `newValue` will be `ControlledValue` due to `range` prop.
       return; 
     }
 
     // Apply clampStep constraints if provided
-    // Order: left <= center <= right
     let finalLeft = newSliderState[0];
     let finalCenter = newSliderState[1];
     let finalRight = newSliderState[2];
@@ -96,30 +88,44 @@ const MultiSlider: FC<Props> = ({
       // Ensure bounds are respected after sync
       finalLeft = Math.max(min, Math.min(finalLeft, max));
       finalRight = Math.max(min, Math.min(finalRight, max));
-      finalCenter = Math.max(min, Math.min(finalCenter, max)); // Recenter if pushed by synced L/R
+      finalCenter = Math.max(min, Math.min(finalCenter, max));
 
       // Ensure order and clampStep after sync
       finalLeft = Math.min(finalLeft, finalCenter - clampStep);
       finalRight = Math.max(finalRight, finalCenter + clampStep);
-
     } else {
-        // Individual handles are being dragged or it's an initial set
-        // Ensure order and apply clampStep
-        finalLeft = Math.min(newSliderState[0], newSliderState[1] - clampStep, newSliderState[2] - 2 * clampStep);
-        finalCenter = Math.max(finalLeft + clampStep, Math.min(newSliderState[1], newSliderState[2] - clampStep));
-        finalRight = Math.max(finalCenter + clampStep, newSliderState[2]);
+      // Individual handles are being dragged
+      // First, ensure the order is maintained
+      if (finalLeft > finalCenter) finalLeft = finalCenter;
+      if (finalCenter > finalRight) finalCenter = finalRight;
+      if (finalLeft > finalRight) finalLeft = finalRight;
+
+      // Calculate the distance from center to each marker
+      const leftDistance = finalCenter - finalLeft;
+      const rightDistance = finalRight - finalCenter;
+
+      // Determine which marker is being dragged
+      const isLeftDragging = Math.abs(finalLeft - newSliderState[0]) > Math.abs(finalRight - newSliderState[2]);
+
+      if (isLeftDragging) {
+        // Left marker is being dragged
+        finalLeft = Math.max(min, Math.min(finalCenter - clampStep, finalLeft));
+        finalRight = finalCenter + (finalCenter - finalLeft); // Mirror the left distance
+      } else {
+        // Right marker is being dragged
+        finalRight = Math.min(max, Math.max(finalCenter + clampStep, finalRight));
+        finalLeft = finalCenter - (finalRight - finalCenter); // Mirror the right distance
+      }
+
+      // Ensure markers stay within bounds and maintain order
+      finalLeft = Math.max(min, Math.min(finalLeft, finalCenter - clampStep));
+      finalRight = Math.max(finalCenter + clampStep, Math.min(finalRight, max));
     }
 
     // Final boundary checks
     finalLeft = Math.max(min, Math.min(finalLeft, max));
     finalCenter = Math.max(min, Math.min(finalCenter, max));
     finalRight = Math.max(min, Math.min(finalRight, max));
-    
-    // Ensure they are still ordered after all adjustments
-    if (finalLeft > finalCenter) finalLeft = finalCenter;
-    if (finalCenter > finalRight) finalCenter = finalRight;
-    if (finalLeft > finalRight) finalLeft = finalRight; // Should not happen if above are correct
-
 
     const newOutputValue: MultiSliderValue = {
       left: finalLeft,
@@ -145,41 +151,40 @@ const MultiSlider: FC<Props> = ({
       max={max}
       step={step}
       value={controlledValue}
-      range // Enables multiple handles
-      count={2} // For 3 handles (creates 3 handles, 2 ranges/tracks)
+      range
+      count={2}
       disabled={disabled}
-      onChange={(val) => handleValueChange(val as ControlledValue)} // Will be array due to range
+      onChange={(val) => handleValueChange(val as ControlledValue)}
       onBeforeChange={() => { /* Corresponds to onPressIn conceptually */ }}
-      // onChangeComplete not directly available, use onAfterChange
       onAfterChange={() => {
-        persistedPositionOrigin.current = undefined; // Reset after drag operation
+        persistedPositionOrigin.current = undefined;
       }}
-      pushable={clampStep > 0 ? clampStep : true} // if clampStep=0, allow pushable without gap
-      // allowCross={false} // Handled by ordering logic and pushable
-      style={{ touchAction: "pan-y" }} // from example
-      className={'relative flex h-9 w-full touch-none items-center'} // For the root .rc-slider styles
+      pushable={clampStep > 0 ? clampStep : true}
+      allowCross={false}
+      style={{ touchAction: "pan-y" }}
+      className={'relative flex h-9 w-full touch-none items-center'}
       handleRender={(origin, props) => {        
         return (
           <SliderThumb
-            {...origin.props} // Pass existing props from rc-slider's handle
-            value={controlledValue[props.index]!} // Pass the correct value for this thumb
-            active={props.index === 1} // Center thumb is visually distinct as "active"
+            {...origin.props}
+            value={controlledValue[props.index]!}
+            active={props.index === 1}
             onClickIn={() => {
               handlePressIn(props.index);
             }}
-            // onTouchStartCapture={(e) => {
-            //   // e.preventDefault(); // preventDefault can interfere with rc-slider's own touch handling
-            //   handlePressIn(props.index);
-            // }}
           />
         );
       }}
-      // For the Tailwind CSS styles:
       classNames={{
         rail: 'absolute h-[3px] w-full bg-gray-300 dark:bg-gray-700',
-        track: 'absolute h-[3px] bg-blue-500 dark:bg-blue-400', // More visible track
-        handle: 'handle-class', // This will be overridden by handleRender
+        track: 'absolute h-[3px] bg-blue-500 dark:bg-blue-400',
+        handle: 'handle-class',
       }}
+      marks={{
+        [min]: min,
+        [max]: max
+      }}
+      included={true}
     />
   );
 };

@@ -24,35 +24,42 @@ export interface DistributionChartProps {
   q3Value?: number | null;
   showCDF?: boolean;
   height?: number;
+  meanValue?: number | null;
+  stdDevValue?: number | null;
+  showOutcome?: boolean;
+  outcome?: number;
 }
 
-// Normal distribution PDF function
-const normalPDF = (x: number, mean: number, stdDev: number): number => {
-  const variance = stdDev * stdDev;
-  return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * 
-         Math.exp(-Math.pow(x - mean, 2) / (2 * variance));
+// Error function implementation
+const erf = (x: number): number => {
+  // Constants
+  const a1 = 0.254829592;
+  const a2 = -0.284496736;
+  const a3 = 1.421413741;
+  const a4 = -1.453152027;
+  const a5 = 1.061405429;
+  const p = 0.3275911;
+
+  // Save the sign of x
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+
+  // A&S formula 7.1.26
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+
+  return sign * y;
 };
 
-// Normal CDF function
+// Normal distribution functions
+const normalPDF = (x: number, mean: number, stdDev: number): number => {
+  const variance = stdDev * stdDev;
+  return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(-Math.pow(x - mean, 2) / (2 * variance));
+};
+
 const normalCDF = (x: number, mean: number, stdDev: number): number => {
   return 0.5 * (1 + erf((x - mean) / (stdDev * Math.sqrt(2))));
 };
-
-// Error function approximation for CDF
-function erf(x: number): number {
-  // Abramowitz and Stegun formula 7.1.26
-  const sign = x < 0 ? -1 : 1;
-  x = Math.abs(x);
-  const a1 =  0.254829592;
-  const a2 = -0.284496736;
-  const a3 =  1.421413741;
-  const a4 = -1.453152027;
-  const a5 =  1.061405429;
-  const p  =  0.3275911;
-  const t = 1.0/(1.0 + p*x);
-  const y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
-  return sign*y;
-}
 
 // Generate points for normal distribution curve
 const generateNormalCurve = (mean: number, stdDev: number, min: number, max: number, points: number = 100): NumericPoint[] => {
@@ -63,6 +70,14 @@ const generateNormalCurve = (mean: number, stdDev: number, min: number, max: num
   });
 };
 
+// Add skew-normal distribution functions
+const skewNormalPDF = (x: number, mean: number, stdDev: number, skew: number): number => {
+  const z = (x - mean) / stdDev;
+  const normal = normalPDF(x, mean, stdDev);
+  const cdf = normalCDF(skew * z, 0, 1);
+  return 2 * normal * cdf;
+};
+
 const DistributionChart: React.FC<DistributionChartProps> = ({
   data,
   mode,
@@ -71,6 +86,10 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
   q3Value,
   showCDF = false,
   height,
+  meanValue,
+  stdDevValue,
+  showOutcome,
+  outcome,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -85,8 +104,8 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       .sort((a, b) => a.x - b.x);    // Sort by numeric x value
   }, [data]);
 
-  // Calculate normal distribution parameters from Q1, Median, Q3
-  const normalParams = useMemo(() => {
+  // Calculate distribution parameters from Q1, Median, Q3
+  const distributionParams = useMemo(() => {
     if (
       q1Value == null ||
       medianValue == null ||
@@ -95,28 +114,77 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       isNaN(medianValue) ||
       isNaN(q3Value)
     ) return null;
-    const stdDev = (q3Value - q1Value) / 1.35;
+
+    // Calculate base parameters
     const mean = medianValue;
-    return { mean, stdDev };
+    const stdDev = (q3Value - q1Value) / 1.35;
+
+    // Calculate skew based on how far Q3 is from the median compared to Q1
+    const leftSpread = medianValue - q1Value;
+    const rightSpread = q3Value - medianValue;
+    const skew = (rightSpread - leftSpread) / (rightSpread + leftSpread);
+
+    return { mean, stdDev, skew };
   }, [q1Value, medianValue, q3Value]);
 
   // Generate normal distribution curve
   const normalCurve = useMemo(() => {
-    if (!normalParams || numericData.length === 0) return [];
+    if (!meanValue || !stdDevValue || numericData.length === 0) return [];
     const min = numericData[0].x;
     const max = numericData[numericData.length - 1].x;
+    const points = 100;
+    const step = (max - min) / (points - 1);
+
     if (!showCDF) {
-      return generateNormalCurve(normalParams.mean, normalParams.stdDev, min, max);
-    } else {
-      // Generate CDF points
-      const points = 100;
-      const step = (max - min) / (points - 1);
       return Array.from({ length: points }, (_, i) => {
         const x = min + i * step;
-        return { x, y: normalCDF(x, normalParams.mean, normalParams.stdDev) };
+        const y = normalPDF(x, meanValue, stdDevValue);
+        return { x, y };
+      });
+    } else {
+      return Array.from({ length: points }, (_, i) => {
+        const x = min + i * step;
+        const y = normalCDF(x, meanValue, stdDevValue);
+        return { x, y };
       });
     }
-  }, [normalParams, numericData, showCDF]);
+  }, [meanValue, stdDevValue, numericData, showCDF]);
+
+  // Generate distribution curve
+  const distributionCurve = useMemo(() => {
+    if (!distributionParams || numericData.length === 0) return [];
+    const min = numericData[0].x;
+    const max = numericData[numericData.length - 1].x;
+      const points = 100;
+      const step = (max - min) / (points - 1);
+
+    if (!showCDF) {
+      return Array.from({ length: points }, (_, i) => {
+        const x = min + i * step;
+        const y = skewNormalPDF(x, distributionParams.mean, distributionParams.stdDev, distributionParams.skew);
+        return { x, y };
+      });
+    } else {
+      // For CDF, we'll use numerical integration of the PDF
+      let runningSum = 0;
+      const pdfPoints = Array.from({ length: points }, (_, i) => {
+        const x = min + i * step;
+        const y = skewNormalPDF(x, distributionParams.mean, distributionParams.stdDev, distributionParams.skew);
+        return { x, y };
+      });
+      
+      // Normalize the PDF
+      const totalArea = pdfPoints.reduce((sum, p) => sum + p.y * step, 0);
+      const normalizedPoints = pdfPoints.map(p => ({ x: p.x, y: p.y / totalArea }));
+      
+      // Calculate CDF
+      return normalizedPoints.map((p, i) => {
+        if (i === 0) return { x: p.x, y: 0 };
+        runningSum += (normalizedPoints[i-1].y + p.y) * step / 2;
+        return { x: p.x, y: runningSum };
+      });
+    }
+  }, [distributionParams, numericData, showCDF]);
 
   // Optionally, generate market CDF curve
   const marketCDFCurve = useMemo(() => {
@@ -167,156 +235,207 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       tooltipRef.current = null;
       return;
     }
+
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
     const parentWidth = (svgRef.current.parentNode as HTMLElement)?.getBoundingClientRect().width || 300;
     const chartWidth = parentWidth - leftPaddingForYAxis - rightPadding;
+
+    // Calculate community distribution parameters
+    const communityMean = d3.mean(numericData, d => d.x) ?? 0;
+    const communityStdDev = (d3.deviation(numericData, d => d.x) ?? 1) * 0.4; // Reduce standard deviation to 40% of original
+
+    // Generate community normal distribution curve
+    const minX = d3.min(numericData, d => d.x) ?? 0;
+    const maxX = d3.max(numericData, d => d.x) ?? 100;
+    const communityCurve = showCDF 
+      ? generateNormalCurve(communityMean, communityStdDev, minX, maxX).map((point, i, arr) => ({
+          x: point.x,
+          y: normalCDF(point.x, communityMean, communityStdDev)
+        }))
+      : generateNormalCurve(communityMean, communityStdDev, minX, maxX);
+
     // Theme colors
     const axisColor = mode === 'pro' ? '#B0C4DE' : '#A0AEC0';
     const gridColor = mode === 'pro' ? '#2D3748' : '#E2E8F0';
     const textColor = mode === 'pro' ? '#E1F5FE' : '#4A5562';
-    const lineStrokeColor = mode === 'pro' ? '#67E8F9' : '#63B3ED';
-    const gradientFrom = mode === 'pro' ? '#67E8F9' : '#63B3ED';
-    const gradientTo = mode === 'pro' ? '#083344' : '#BEE3F8';
-    const q1q3RangeFillColor = mode === 'pro' ? 'rgba(103, 232, 249, 0.25)' : 'rgba(99, 179, 237, 0.25)';
-    const medianLineColor = mode === 'pro' ? '#FBBF24' : '#F59E0B';
-    const normalGradientFrom = mode === 'pro' ? '#FBBF24' : '#F59E0B';
-    const normalGradientTo = mode === 'pro' ? '#92400E' : '#B45309';
-    const dataMinX = numericData[0].x;
-    const dataMaxX = numericData[numericData.length - 1].x;
+    const communityLineColor = mode === 'pro' ? '#67E8F9' : '#63B3ED';
+    const userLineColor = mode === 'pro' ? '#FBBF24' : '#F59E0B';
+    const communityGradientFrom = mode === 'pro' ? '#67E8F9' : '#63B3ED';
+    const communityGradientTo = mode === 'pro' ? '#083344' : '#BEE3F8';
+    const userGradientFrom = mode === 'pro' ? '#FBBF24' : '#F59E0B';
+    const userGradientTo = mode === 'pro' ? '#92400E' : '#B45309';
+
+    // Create scales
     const xScale = d3.scaleLinear()
-      .domain([dataMinX, dataMaxX])
+      .domain([minX, maxX])
       .range([0, chartWidth]);
-    // For CDF, y domain is [0, 1]. For PDF, use max y.
-    const yMax = showCDF ? 1 : (d3.max(numericData, d => d.y) || 0);
+
+    // Adjust y-axis scale based on whether we're showing PDF or CDF
     const yScale = d3.scaleLinear()
-      .domain([0, yMax > 0 ? yMax * 1.1 : 1])
+      .domain([0, showCDF ? 1 : (d3.max(communityCurve, d => d.y) ?? 1)])
       .range([chartHeight - bottomPadding - topPadding, 0]);
+
     const chartArea = svg.append('g')
       .attr('transform', `translate(${leftPaddingForYAxis}, ${topPadding})`);
+
     // Add gradients
     const defs = svg.append('defs');
-    // Market distribution gradient
-    const gradient = defs.append('linearGradient')
+    
+    // Community distribution gradient
+    const communityGradient = defs.append('linearGradient')
       .attr('id', uniqueId)
       .attr('x1', '0%').attr('y1', '0%')
       .attr('x2', '0%').attr('y2', '100%');
-    gradient.append('stop').attr('offset', '0%').attr('stop-color', gradientFrom).attr('stop-opacity', 0.7);
-    gradient.append('stop').attr('offset', '100%').attr('stop-color', gradientTo).attr('stop-opacity', 0.1);
-    // Normal distribution gradient
-    const normalGradient = defs.append('linearGradient')
+    communityGradient.append('stop').attr('offset', '0%').attr('stop-color', communityGradientFrom).attr('stop-opacity', 0.7);
+    communityGradient.append('stop').attr('offset', '100%').attr('stop-color', communityGradientTo).attr('stop-opacity', 0.1);
+
+    // User distribution gradient
+    const userGradient = defs.append('linearGradient')
       .attr('id', normalGradientId)
       .attr('x1', '0%').attr('y1', '0%')
       .attr('x2', '0%').attr('y2', '100%');
-    normalGradient.append('stop').attr('offset', '0%').attr('stop-color', normalGradientFrom).attr('stop-opacity', 0.7);
-    normalGradient.append('stop').attr('offset', '100%').attr('stop-color', normalGradientTo).attr('stop-opacity', 0.1);
+    userGradient.append('stop').attr('offset', '0%').attr('stop-color', userGradientFrom).attr('stop-opacity', 0.7);
+    userGradient.append('stop').attr('offset', '100%').attr('stop-color', userGradientTo).attr('stop-opacity', 0.1);
+
     // Line and Area generators
-    const lineGenerator: d3.Line<NumericPoint> = d3.line<NumericPoint>()
-      .x(d => xScale(d.x)!)
-      .y(d => yScale(d.y)!)
+    const lineGenerator = d3.line<NumericPoint>()
+      .x(d => xScale(d.x) ?? 0)
+      .y(d => yScale(d.y) ?? 0)
       .curve(d3.curveCatmullRom.alpha(0.5));
-    const areaGenerator: d3.Area<NumericPoint> = d3.area<NumericPoint>()
-      .x(d => xScale(d.x)!)
-      .y0(yScale(0)!)
-      .y1(d => yScale(d.y)!)
+
+    const areaGenerator = d3.area<NumericPoint>()
+      .x(d => xScale(d.x) ?? 0)
+      .y0(yScale(0) ?? 0)
+      .y1(d => yScale(d.y) ?? 0)
       .curve(d3.curveCatmullRom.alpha(0.5));
-    // Draw Market Distribution Area (PDF only)
-    if (!showCDF) {
+
+    // Draw Community Distribution
       chartArea.append('path')
-        .datum(numericData)
+      .datum(communityCurve)
         .attr('fill', `url(#${uniqueId})`)
         .attr('d', areaGenerator);
-    }
-    // Draw Q1-Q3 Range Highlight if values are present (PDF only)
-    if (!showCDF && q1Value != null && q3Value != null && q1Value <= q3Value) {
-      const q1q3Subset = numericData.filter(d => d.x >= q1Value && d.x <= q3Value);
-      let boundaryPoints: NumericPoint[] = [];
-      const firstPoint = numericData[0];
-      const lastPoint = numericData[numericData.length-1];
-      const addBoundary = (val: number, isLeft: boolean) => {
-        if (val < firstPoint.x || val > lastPoint.x) return;
-        const existing = numericData.find(p => p.x === val);
-        if (existing) {
-          boundaryPoints.push(existing);
-          return;
-        }
-        const bisect = d3.bisector((d: NumericPoint) => d.x).left;
-        const index = bisect(numericData, val);
-        const p0 = numericData[index - 1];
-        const p1 = numericData[index];
-        if (p0 && p1) {
-          const t = (val - p0.x) / (p1.x - p0.x);
-          boundaryPoints.push({x: val, y: p0.y * (1-t) + p1.y * t });
-        } else if (isLeft && p1) {
-          boundaryPoints.push({x: val, y: p1.y });
-        } else if (!isLeft && p0) {
-          boundaryPoints.push({x: val, y: p0.y });
-        }
-      };
-      addBoundary(q1Value, true);
-      addBoundary(q3Value, false);
-      const finalQ1Q3Data = [...boundaryPoints, ...q1q3Subset]
-        .filter((p, i, self) => i === self.findIndex(t => t.x === p.x))
-        .sort((a,b) => a.x - b.x);
-      if (finalQ1Q3Data.length >= 2) {
+
         chartArea.append('path')
-          .datum(finalQ1Q3Data)
-          .attr('fill', q1q3RangeFillColor)
-          .attr('stroke', 'none')
-          .attr('d', areaGenerator); 
-      }
-    }
-    // Draw Normal Distribution or CDF overlay
-    if (normalCurve.length > 0) {
-      if (!showCDF) {
-        // PDF overlay as before
-        const maxNormalY = d3.max(normalCurve, d => d.y) || 0;
-        const yMax = d3.max(numericData, d => d.y) || 0;
-        const scaleFactor = yMax / maxNormalY;
-        const scaledNormalCurve = normalCurve.map(d => ({ x: d.x, y: d.y * scaleFactor }));
-        chartArea.append('path')
-          .datum(scaledNormalCurve)
-          .attr('fill', `url(#${normalGradientId})`)
-          .attr('d', areaGenerator);
-        chartArea.append('path')
-          .datum(scaledNormalCurve)
+      .datum(communityCurve)
           .attr('fill', 'none')
-          .attr('stroke', normalGradientFrom)
+      .attr('stroke', communityLineColor)
           .attr('stroke-width', 2)
           .attr('d', lineGenerator);
-      } else {
-        // CDF overlay: just a line, no area
-        chartArea.append('path')
-          .datum(normalCurve)
-          .attr('fill', 'none')
-          .attr('stroke', normalGradientFrom)
-          .attr('stroke-width', 2.5)
-          .attr('stroke-dasharray', '4,2')
-          .attr('d', lineGenerator);
-      }
-    }
-    // Optionally, draw market CDF as a secondary curve
-    if (showCDF && marketCDFCurve.length > 0) {
+
+    // Draw User's Distribution if provided
+    if (typeof meanValue === 'number' && typeof stdDevValue === 'number') {
+      const userCurve = showCDF
+        ? generateNormalCurve(meanValue, stdDevValue, minX, maxX).map((point, i, arr) => ({
+            x: point.x,
+            y: normalCDF(point.x, meanValue, stdDevValue)
+          }))
+        : generateNormalCurve(meanValue, stdDevValue, minX, maxX);
+
+      // Scale the user's curve to match the community curve's height
+      const maxCommunityY = d3.max(communityCurve, d => d.y) ?? 1;
+      const maxUserY = d3.max(userCurve, d => d.y) ?? 1;
+      const scaleFactor = maxCommunityY / maxUserY;
+      
+      const scaledUserCurve = userCurve.map(d => ({
+        x: d.x,
+        y: d.y * scaleFactor
+      }));
+
       chartArea.append('path')
-        .datum(marketCDFCurve)
+        .datum(scaledUserCurve)
+        .attr('fill', `url(#${normalGradientId})`)
+        .attr('d', areaGenerator);
+
+      chartArea.append('path')
+        .datum(scaledUserCurve)
         .attr('fill', 'none')
-        .attr('stroke', lineStrokeColor)
+        .attr('stroke', userLineColor)
         .attr('stroke-width', 2)
         .attr('d', lineGenerator);
+
+      // Add mouse interaction
+      svg.on('mousemove', (event) => {
+        const [pointerX] = d3.pointer(event, chartArea.node());
+        const mouseXValue = xScale.invert(pointerX);
+
+        if (mouseXValue < minX || mouseXValue > maxX) {
+          hoverLine.style('opacity', 0);
+          hoverCircle.style('opacity', 0);
+          tooltip.style('opacity', 0);
+          return;
+        }
+
+        // Calculate community and user probabilities at mouse position
+        const communityProb = showCDF 
+          ? normalCDF(mouseXValue, communityMean, communityStdDev)
+          : normalPDF(mouseXValue, communityMean, communityStdDev);
+        
+        let userProb = null;
+        if (typeof meanValue === 'number' && typeof stdDevValue === 'number') {
+          const userProbRaw = showCDF
+            ? normalCDF(mouseXValue, meanValue, stdDevValue)
+            : normalPDF(mouseXValue, meanValue, stdDevValue);
+          
+          // Scale user probability to match community curve height
+          const maxCommunityY = d3.max(communityCurve, d => d.y) ?? 1;
+          const maxUserY = d3.max(userCurve, d => d.y) ?? 1;
+          const scaleFactor = maxCommunityY / maxUserY;
+          userProb = userProbRaw * scaleFactor;
+        }
+
+        // Update hover elements
+        hoverLine
+          .attr('x1', pointerX)
+          .attr('x2', pointerX)
+          .attr('y1', yScale(0))
+          .attr('y2', yScale(communityProb))
+          .style('opacity', 1);
+
+        hoverCircle
+          .attr('cx', pointerX)
+          .attr('cy', yScale(communityProb))
+          .style('opacity', 1);
+
+        // Update tooltip
+        const tooltipWidth = 150;
+        const tooltipHeight = 80;
+        const padding = 5;
+        
+        let left = event.clientX + padding;
+        let top = event.clientY - tooltipHeight - padding;
+        
+        if (left + tooltipWidth > window.innerWidth) {
+          left = event.clientX - tooltipWidth - padding;
+        }
+        if (top < 0) {
+          top = event.clientY + padding;
+        }
+
+        tooltip
+          .style('opacity', 0.95)
+          .html(`
+            <div class="font-medium">${formatXAxisLabel(mouseXValue)}</div>
+            <div class="text-sm mt-1">
+              Community: ${formatXAxisLabel(communityMean)}
+              ${userProb !== null ? `<br/>Your Prediction: ${formatXAxisLabel(meanValue)}` : ''}
+            </div>
+          `)
+          .style('left', `${left}px`)
+          .style('top', `${top}px`)
+          .style('position', 'fixed');
+      }).on('mouseleave', () => {
+        hoverLine.style('opacity', 0);
+        hoverCircle.style('opacity', 0);
+        tooltip.style('opacity', 0);
+      });
     }
-    // Draw Market Distribution Line (PDF only)
-    if (!showCDF) {
-      chartArea.append('path')
-        .datum(numericData)
-        .attr('fill', 'none')
-        .attr('stroke', lineStrokeColor)
-        .attr('stroke-width', 2)
-        .attr('d', lineGenerator);
-    }
-    // X Axis
+
+    // Add axes
     const xAxis = d3.axisBottom(xScale)
       .ticks(chartWidth / 80)
       .tickFormat((d) => formatXAxisLabel(d as number));
+
     chartArea.append('g')
       .attr('transform', `translate(0, ${chartHeight - bottomPadding - topPadding})`)
       .call(xAxis)
@@ -324,28 +443,35 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
         .style('text-anchor', 'middle')
         .attr('fill', textColor)
         .style('font-size', '10px');
-    chartArea.selectAll('.domain').attr('stroke', axisColor);
-    chartArea.selectAll('.tick line').attr('stroke', axisColor).attr('opacity', 0.3);
-    // Y Axis
-    const yAxis = d3.axisLeft(yScale).ticks(5).tickFormat(showCDF ? d3.format(".0%") : d3.format(".2~"));
+
+    const yAxis = d3.axisLeft(yScale)
+      .ticks(5)
+      .tickFormat(d3.format('.2f'));
+
     chartArea.append('g')
       .call(yAxis)
       .selectAll('text')
         .attr('fill', textColor)
         .style('font-size', '10px');
+
+    // Style axes
     chartArea.selectAll('.domain').attr('stroke', axisColor);
     chartArea.selectAll('.tick line').attr('stroke', axisColor).attr('opacity', 0.3);
-    // Hover effects
+
+    // Add hover effects
     const hoverLine = chartArea.append('line')
       .attr('stroke', textColor)
       .attr('stroke-width', 1)
       .attr('stroke-dasharray', '3,3')
       .style('opacity', 0);
+
     const hoverCircle = chartArea.append('circle')
       .attr('fill', 'none')
       .attr('stroke', textColor)
       .attr('r', 4)
       .style('opacity', 0);
+
+    // Create tooltip if it doesn't exist
     if (!tooltipRef.current && svgRef.current?.parentNode) {
       const parent = svgRef.current.parentNode as HTMLElement;
       tooltipRef.current = d3.select(parent).append('div')
@@ -359,71 +485,38 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
         .style('pointer-events', 'none')
         .style('opacity', 0)
         .style('font-size', '12px')
+        .style('z-index', '1000')
         .node();
     }
+
     const tooltip = d3.select(tooltipRef.current);
-    const pathNode = chartArea.select<SVGPathElement>('path[fill^="url(#"] + path').node();
-    svg.on('mousemove', (event) => {
-      if (!pathNode || numericData.length === 0) return;
-      const [pointerX] = d3.pointer(event, chartArea.node());
-      const mouseXValue = xScale.invert(pointerX);
-      if (mouseXValue < numericData[0].x || mouseXValue > numericData[numericData.length - 1].x) {
-        hoverLine.style('opacity', 0);
-        hoverCircle.style('opacity', 0);
-        if (tooltip) tooltip.style('opacity', 0);
-        return;
+
+    // Add outcome line if provided
+    if (showOutcome && outcome !== undefined) {
+      const outcomeX = xScale(outcome);
+      if (outcomeX !== undefined) {
+        // Add outcome line
+        svg.append('line')
+          .attr('x1', outcomeX)
+          .attr('y1', 0)
+          .attr('x2', outcomeX)
+          .attr('y2', chartHeight - bottomPadding - topPadding)
+          .attr('stroke', mode === 'pro' ? '#00ffff' : '#2563eb')
+          .attr('stroke-width', 2)
+          .attr('stroke-dasharray', '4,4');
+
+        // Add outcome label
+        svg.append('text')
+          .attr('x', outcomeX)
+          .attr('y', 10)
+          .attr('text-anchor', 'middle')
+          .attr('fill', mode === 'pro' ? '#00ffff' : '#2563eb')
+          .attr('font-size', '12px')
+          .text('Outcome');
       }
-      const bisect = d3.bisector((d: NumericPoint) => d.x).left;
-      const index = bisect(numericData, mouseXValue, 1);
-      const p0 = numericData[index - 1];
-      const p1 = numericData[index];
-      let closestDataPoint: NumericPoint;
-      if (!p0) {
-        closestDataPoint = p1;
-      } else if (!p1) {
-        closestDataPoint = p0;
-      } else {
-        closestDataPoint = (mouseXValue - p0.x > p1.x - mouseXValue) ? p1 : p0;
-      }
-      let normalY = 0;
-      if (normalParams) {
-        if (!showCDF) {
-          normalY = normalPDF(mouseXValue, normalParams.mean, normalParams.stdDev);
-          const maxNormalY = d3.max(normalCurve, d => d.y) || 0;
-          const yMax = d3.max(numericData, d => d.y) || 0;
-          const scaleFactor = yMax / maxNormalY;
-          normalY *= scaleFactor;
-        } else {
-          normalY = normalCDF(mouseXValue, normalParams.mean, normalParams.stdDev);
-        }
-      }
-      hoverLine
-        .attr('x1', xScale(mouseXValue))
-        .attr('x2', xScale(mouseXValue))
-        .attr('y1', yScale(0)!)
-        .attr('y2', yScale(closestDataPoint.y))
-        .style('opacity', 1);
-      hoverCircle
-        .attr('cx', xScale(mouseXValue))
-        .attr('cy', yScale(closestDataPoint.y))
-        .style('opacity', 1);
-      if (tooltip) {
-        tooltip
-          .style('opacity', 0.95)
-          .html(`
-            Market: ${formatXAxisLabel(mouseXValue)}<br/>
-            ${showCDF ? 'Cumulative Probability' : 'Probability'}: ${d3.format(showCDF ? ".2%" : ".2f")(closestDataPoint.y)}<br/>
-            ${normalParams ? `Your Prediction: ${d3.format(showCDF ? ".2%" : ".2f")(normalY)}` : ''}
-          `)
-          .style('left', `${event.pageX + 15}px`)
-          .style('top', `${event.pageY - 15}px`);
-      }
-    }).on('mouseleave', () => {
-      hoverLine.style('opacity', 0);
-      hoverCircle.style('opacity', 0);
-      tooltip.style('opacity', 0);
-    });
-  }, [data, mode, q1Value, medianValue, q3Value, uniqueId, normalGradientId, normalCurve, normalParams, showCDF, marketCDFCurve]);
+    }
+
+  }, [data, mode, meanValue, stdDevValue, uniqueId, normalGradientId, showCDF, showOutcome, outcome]);
   return (
     <div style={{ 
       width: '100%', 

@@ -37,7 +37,7 @@ export default function LeaderboardPage() {
   const xpColor = mode === 'pro' ? 'text-yellow-400' : 'text-amber-500';
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor} min-h-full font-serif`}>
+    <div className={`p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor} min-h-full font-['Readex Pro']`}>
       <div className="max-w-4xl mx-auto">
         <h1 className={`text-4xl font-bold mb-8 text-center ${headerTextColor}`}>Leaderboard</h1>
         

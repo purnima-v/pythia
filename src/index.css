@@ -6,11 +6,8 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  color: #213547;
+  background-color: #ffffff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -32,6 +29,8 @@ body {
   /* place-items: center; */
   min-width: 320px;
   min-height: 100vh;
+  background-color: #ffffff;
+  color: #213547;
 }
 
 h1 {
@@ -49,6 +48,11 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  outline: none !important;
 }
 button:hover {
   border-color: #646cff;
@@ -69,4 +73,37 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Override button styles */
+button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Specific styles for prediction buttons */
+.prediction-button {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  outline: none !important;
+  background-color: transparent !important;
+}
+
+.prediction-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+.prediction-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
 }

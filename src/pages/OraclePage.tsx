@@ -30,7 +30,7 @@ export default function OraclePage() {
   const accentColor = mode === 'pro' ? 'text-poseidon-accent-cyan' : 'text-light-accent-primary';
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor} min-h-full font-serif`}>
+    <div className={`p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor} min-h-full font-['Readex Pro']`}>
       <div className="max-w-4xl mx-auto">
         <h1 className={`text-4xl font-bold mb-8 text-center ${headerTextColor}`}>Oracle Hub</h1>
 

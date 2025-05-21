@@ -7,20 +7,33 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import CreateMarketPage from './pages/CreateMarketPage';
 import OraclePage from './pages/OraclePage';
 import PortfolioPage from './pages/PortfolioPage';
+import SearchResultsPage from './pages/SearchResultsPage';
+import ResolvedMarketPage from './pages/ResolvedMarketPage';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { ToastContainer } from 'react-toastify';
+
+import { WagmiConfig, WagmiProvider } from 'wagmi';
+import { config } from './wagmi.config'; 
 
 const App: React.FC = () => {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<MarketsPage />} />
-        <Route path="/markets" element={<MarketsPage />} />
-        <Route path="/market/:marketId" element={<MarketDetailPage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/create-market" element={<CreateMarketPage />} />
-        <Route path="/oracle" element={<OraclePage />} />
-        <Route path="/portfolio" element={<PortfolioPage />} />
-      </Routes>
-    </Layout>
+    <WagmiProvider config={config}> {/* ✅ Wrap entire app */}
+      <NotificationProvider>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<MarketsPage />} />
+            <Route path="/markets" element={<MarketsPage />} />
+            <Route path="/market/:marketId" element={<MarketDetailPage />} />
+            <Route path="/market/:marketId/resolved" element={<ResolvedMarketPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/create-market" element={<CreateMarketPage />} />
+            <Route path="/oracle" element={<OraclePage />} />
+            <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/search" element={<SearchResultsPage />} />
+          </Routes>
+        </Layout>
+      </NotificationProvider>
+    </WagmiProvider>
   );
 };
 
