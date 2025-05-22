@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi';
 import { PAIR_ABI } from '../contracts/ABIs';
 import { readContract } from 'viem/actions';
 import { config } from '../wagmi.config';
+import { toast } from '../components/ui/toast.tsx';
 
 //const [payout, setPayout]= useState(0);
 
@@ -46,15 +47,15 @@ const mockPortfolioData: PortfolioPosition[] = [
   },
   {
     id: 'p3',
-    marketId: 'm_resolved_1', // Placeholder ID for a resolved market
-    marketQuestion: 'Old Market: Will X happen by Y date?',
-    stake: '50 USD',
-    avgPrice: '0.80',
+    marketId: '2',
+    marketQuestion: 'Average global temperature anomaly for 2025?',
+    stake: '80 USD',
+    avgPrice: '0.55 (implies 55% chance)',
     currentValue: '-',
     potentialReturn: '-',
     status: 'Resolved',
-    outcome: 'Yes',
-    pnl: '+12.50 USD'
+    outcome: '1.2°C',
+    pnl: '+20.00 USD'
   },
   {
     id: 'p4',
@@ -108,6 +109,11 @@ const summaryStats = {
 
 export default function PortfolioPage() {
   const { mode } = useMode();
+
+  // Modal state for claim payout
+  const [showClaimModal, setShowClaimModal] = useState(false);
+  const [claimMarket, setClaimMarket] = useState<string | null>(null);
+  const [claimMarketQuestion, setClaimMarketQuestion] = useState<string | null>(null);
 
   // Mode-specific styles
   const bgColor = mode === 'pro' ? 'bg-poseidon-deep-blue' : 'bg-light-bg';
@@ -185,7 +191,11 @@ export default function PortfolioPage() {
                   </div>
                   <button
                     className="px-4 py-2 rounded bg-blue-600 text-white ml-4 whitespace-nowrap"
-                    onClick={() => alert(`Claim payout for ${position.marketQuestion}`)}
+                    onClick={() => {
+                      setClaimMarket(position.marketId);
+                      setClaimMarketQuestion(position.marketQuestion);
+                      setShowClaimModal(true);
+                    }}
                   >
                     Claim Payout
                   </button>
@@ -196,6 +206,36 @@ export default function PortfolioPage() {
             <p className={`${cardBgColor} border ${cardBorderColor} p-4 rounded-md`}>No resolved positions.</p>
           )}
         </div>
+
+        {/* Claim Payout Modal */}
+        {showClaimModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className={`bg-white dark:bg-poseidon-mid-blue rounded-lg shadow-lg p-6 max-w-md w-full`}>
+              <h3 className="text-lg font-semibold mb-4">Confirm Claim Payout</h3>
+              <p className="mb-4">Are you sure you want to claim your payout for:<br /><span className="font-semibold">{claimMarketQuestion}</span>?</p>
+              <div className="flex justify-end gap-2">
+                <button
+                  className="px-4 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  onClick={() => setShowClaimModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => {
+                    setShowClaimModal(false);
+                    toast({
+                      title: 'Success',
+                      description: 'Payout claimed!'
+                    });
+                  }}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

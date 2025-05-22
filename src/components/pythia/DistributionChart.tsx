@@ -78,8 +78,18 @@ const skewNormalPDF = (x: number, mean: number, stdDev: number, skew: number): n
   return 2 * normal * cdf;
 };
 
+const dummyData: InputPoint[] = [
+  { x: 0, y: 0.1 },
+  { x: 1, y: 0.2 },
+  { x: 2, y: 0.3 },
+  { x: 3, y: 0.2 },
+  { x: 4, y: 0.1 },
+  { x: 5, y: 0.05 },
+  { x: 6, y: 0.05 }
+];
+
 const DistributionChart: React.FC<DistributionChartProps> = ({
-  data,
+  data = dummyData, // Use dummy data if no data is provided
   mode,
   q1Value,
   medianValue,
@@ -228,208 +238,77 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
     return value.toFixed(1);
   };
 
+  // Create refs to store scales and fixed domain values
+  const xScaleRef = useRef<d3.ScaleLinear<number, number> | null>(null);
+  const yScaleRef = useRef<d3.ScaleLinear<number, number> | null>(null);
+  const chartAreaRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
+  const isInitializedRef = useRef(false);
+  const domainRef = useRef<{minX: number, maxX: number} | null>(null);
+  
+  // Store fixed community mean and stddev
+  const communityStatsRef = useRef<{ mean: number, stdDev: number } | null>(null);
+  
+  // First useEffect - Initialize chart structure and axes (runs once)
   useEffect(() => {
     if (numericData.length === 0 || !svgRef.current) {
       if(svgRef.current) d3.select(svgRef.current).selectAll('*').remove();
       if(tooltipRef.current) d3.select(tooltipRef.current).remove();
       tooltipRef.current = null;
+      isInitializedRef.current = false;
+      communityStatsRef.current = null;
       return;
     }
+
+    if (isInitializedRef.current) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
     const parentWidth = (svgRef.current.parentNode as HTMLElement)?.getBoundingClientRect().width || 300;
     const chartWidth = parentWidth - leftPaddingForYAxis - rightPadding;
 
-    // Calculate community distribution parameters
-    const communityMean = d3.mean(numericData, d => d.x) ?? 0;
-    const communityStdDev = (d3.deviation(numericData, d => d.x) ?? 1) * 0.4; // Reduce standard deviation to 40% of original
-
-    // Generate community normal distribution curve
+    // Calculate fixed min and max for x-axis based on the original data
     const minX = d3.min(numericData, d => d.x) ?? 0;
     const maxX = d3.max(numericData, d => d.x) ?? 100;
-    const communityCurve = showCDF 
-      ? generateNormalCurve(communityMean, communityStdDev, minX, maxX).map((point, i, arr) => ({
-          x: point.x,
-          y: normalCDF(point.x, communityMean, communityStdDev)
-        }))
-      : generateNormalCurve(communityMean, communityStdDev, minX, maxX);
+    domainRef.current = { minX, maxX };
+
+    // Calculate and store fixed community mean and stddev
+    const communityMean = d3.mean(numericData, d => d.x) ?? 0;
+    const communityStdDev = (d3.deviation(numericData, d => d.x) ?? 1) * 0.4;
+    communityStatsRef.current = { mean: communityMean, stdDev: communityStdDev };
 
     // Theme colors
     const axisColor = mode === 'pro' ? '#B0C4DE' : '#A0AEC0';
     const gridColor = mode === 'pro' ? '#2D3748' : '#E2E8F0';
     const textColor = mode === 'pro' ? '#E1F5FE' : '#4A5562';
-    const communityLineColor = mode === 'pro' ? '#67E8F9' : '#63B3ED';
-    const userLineColor = mode === 'pro' ? '#FBBF24' : '#F59E0B';
-    const communityGradientFrom = mode === 'pro' ? '#67E8F9' : '#63B3ED';
-    const communityGradientTo = mode === 'pro' ? '#083344' : '#BEE3F8';
-    const userGradientFrom = mode === 'pro' ? '#FBBF24' : '#F59E0B';
-    const userGradientTo = mode === 'pro' ? '#92400E' : '#B45309';
-
-    // Create scales
+    
+    // Create scales with FIXED domain based on the data
     const xScale = d3.scaleLinear()
       .domain([minX, maxX])
       .range([0, chartWidth]);
+    
+    // Store the scale for future use
+    xScaleRef.current = xScale;
 
-    // Adjust y-axis scale based on whether we're showing PDF or CDF
+    // Calculate max height for PDF or fixed height for CDF
+    // Use the fixed community stats
+    const tempCurve = showCDF 
+      ? generateNormalCurve(communityMean, communityStdDev, minX, maxX).map(p => ({ x: p.x, y: normalCDF(p.x, communityMean, communityStdDev) }))
+      : generateNormalCurve(communityMean, communityStdDev, minX, maxX);
+    const yMax = showCDF ? 1 : d3.max(tempCurve, d => d.y) ?? 1;
+    
+    // Create y-scale with a bit of padding at the top
     const yScale = d3.scaleLinear()
-      .domain([0, showCDF ? 1 : (d3.max(communityCurve, d => d.y) ?? 1)])
+      .domain([0, yMax * 1.3]) // Add 30% extra space at the top
       .range([chartHeight - bottomPadding - topPadding, 0]);
+    
+    // Store the y-scale for future use
+    yScaleRef.current = yScale;
 
+    // Create chart area
     const chartArea = svg.append('g')
       .attr('transform', `translate(${leftPaddingForYAxis}, ${topPadding})`);
-
-    // Add gradients
-    const defs = svg.append('defs');
     
-    // Community distribution gradient
-    const communityGradient = defs.append('linearGradient')
-      .attr('id', uniqueId)
-      .attr('x1', '0%').attr('y1', '0%')
-      .attr('x2', '0%').attr('y2', '100%');
-    communityGradient.append('stop').attr('offset', '0%').attr('stop-color', communityGradientFrom).attr('stop-opacity', 0.7);
-    communityGradient.append('stop').attr('offset', '100%').attr('stop-color', communityGradientTo).attr('stop-opacity', 0.1);
-
-    // User distribution gradient
-    const userGradient = defs.append('linearGradient')
-      .attr('id', normalGradientId)
-      .attr('x1', '0%').attr('y1', '0%')
-      .attr('x2', '0%').attr('y2', '100%');
-    userGradient.append('stop').attr('offset', '0%').attr('stop-color', userGradientFrom).attr('stop-opacity', 0.7);
-    userGradient.append('stop').attr('offset', '100%').attr('stop-color', userGradientTo).attr('stop-opacity', 0.1);
-
-    // Line and Area generators
-    const lineGenerator = d3.line<NumericPoint>()
-      .x(d => xScale(d.x) ?? 0)
-      .y(d => yScale(d.y) ?? 0)
-      .curve(d3.curveCatmullRom.alpha(0.5));
-
-    const areaGenerator = d3.area<NumericPoint>()
-      .x(d => xScale(d.x) ?? 0)
-      .y0(yScale(0) ?? 0)
-      .y1(d => yScale(d.y) ?? 0)
-      .curve(d3.curveCatmullRom.alpha(0.5));
-
-    // Draw Community Distribution
-      chartArea.append('path')
-      .datum(communityCurve)
-        .attr('fill', `url(#${uniqueId})`)
-        .attr('d', areaGenerator);
-
-        chartArea.append('path')
-      .datum(communityCurve)
-          .attr('fill', 'none')
-      .attr('stroke', communityLineColor)
-          .attr('stroke-width', 2)
-          .attr('d', lineGenerator);
-
-    // Draw User's Distribution if provided
-    if (typeof meanValue === 'number' && typeof stdDevValue === 'number') {
-      const userCurve = showCDF
-        ? generateNormalCurve(meanValue, stdDevValue, minX, maxX).map((point, i, arr) => ({
-            x: point.x,
-            y: normalCDF(point.x, meanValue, stdDevValue)
-          }))
-        : generateNormalCurve(meanValue, stdDevValue, minX, maxX);
-
-      // Scale the user's curve to match the community curve's height
-      const maxCommunityY = d3.max(communityCurve, d => d.y) ?? 1;
-      const maxUserY = d3.max(userCurve, d => d.y) ?? 1;
-      const scaleFactor = maxCommunityY / maxUserY;
-      
-      const scaledUserCurve = userCurve.map(d => ({
-        x: d.x,
-        y: d.y * scaleFactor
-      }));
-
-      chartArea.append('path')
-        .datum(scaledUserCurve)
-        .attr('fill', `url(#${normalGradientId})`)
-        .attr('d', areaGenerator);
-
-      chartArea.append('path')
-        .datum(scaledUserCurve)
-        .attr('fill', 'none')
-        .attr('stroke', userLineColor)
-        .attr('stroke-width', 2)
-        .attr('d', lineGenerator);
-
-      // Add mouse interaction
-      svg.on('mousemove', (event) => {
-        const [pointerX] = d3.pointer(event, chartArea.node());
-        const mouseXValue = xScale.invert(pointerX);
-
-        if (mouseXValue < minX || mouseXValue > maxX) {
-          hoverLine.style('opacity', 0);
-          hoverCircle.style('opacity', 0);
-          tooltip.style('opacity', 0);
-          return;
-        }
-
-        // Calculate community and user probabilities at mouse position
-        const communityProb = showCDF 
-          ? normalCDF(mouseXValue, communityMean, communityStdDev)
-          : normalPDF(mouseXValue, communityMean, communityStdDev);
-        
-        let userProb = null;
-        if (typeof meanValue === 'number' && typeof stdDevValue === 'number') {
-          const userProbRaw = showCDF
-            ? normalCDF(mouseXValue, meanValue, stdDevValue)
-            : normalPDF(mouseXValue, meanValue, stdDevValue);
-          
-          // Scale user probability to match community curve height
-          const maxCommunityY = d3.max(communityCurve, d => d.y) ?? 1;
-          const maxUserY = d3.max(userCurve, d => d.y) ?? 1;
-          const scaleFactor = maxCommunityY / maxUserY;
-          userProb = userProbRaw * scaleFactor;
-        }
-
-        // Update hover elements
-        hoverLine
-          .attr('x1', pointerX)
-          .attr('x2', pointerX)
-          .attr('y1', yScale(0))
-          .attr('y2', yScale(communityProb))
-          .style('opacity', 1);
-
-        hoverCircle
-          .attr('cx', pointerX)
-          .attr('cy', yScale(communityProb))
-          .style('opacity', 1);
-
-        // Update tooltip
-        const tooltipWidth = 150;
-        const tooltipHeight = 80;
-        const padding = 5;
-        
-        let left = event.clientX + padding;
-        let top = event.clientY - tooltipHeight - padding;
-        
-        if (left + tooltipWidth > window.innerWidth) {
-          left = event.clientX - tooltipWidth - padding;
-        }
-        if (top < 0) {
-          top = event.clientY + padding;
-        }
-
-        tooltip
-          .style('opacity', 0.95)
-          .html(`
-            <div class="font-medium">${formatXAxisLabel(mouseXValue)}</div>
-            <div class="text-sm mt-1">
-              Community: ${formatXAxisLabel(communityMean)}
-              ${userProb !== null ? `<br/>Your Prediction: ${formatXAxisLabel(meanValue)}` : ''}
-            </div>
-          `)
-          .style('left', `${left}px`)
-          .style('top', `${top}px`)
-          .style('position', 'fixed');
-      }).on('mouseleave', () => {
-        hoverLine.style('opacity', 0);
-        hoverCircle.style('opacity', 0);
-        tooltip.style('opacity', 0);
-      });
-    }
+    chartAreaRef.current = chartArea;
 
     // Add axes
     const xAxis = d3.axisBottom(xScale)
@@ -437,6 +316,7 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       .tickFormat((d) => formatXAxisLabel(d as number));
 
     chartArea.append('g')
+      .attr('class', 'x-axis')
       .attr('transform', `translate(0, ${chartHeight - bottomPadding - topPadding})`)
       .call(xAxis)
       .selectAll('text')
@@ -449,6 +329,7 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       .tickFormat(d3.format('.2f'));
 
     chartArea.append('g')
+      .attr('class', 'y-axis')
       .call(yAxis)
       .selectAll('text')
         .attr('fill', textColor)
@@ -458,14 +339,45 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
     chartArea.selectAll('.domain').attr('stroke', axisColor);
     chartArea.selectAll('.tick line').attr('stroke', axisColor).attr('opacity', 0.3);
 
-    // Add hover effects
-    const hoverLine = chartArea.append('line')
+    // Add defs for gradients
+    const defs = svg.append('defs');
+    
+    // Community distribution gradient
+    const communityGradientFrom = mode === 'pro' ? '#67E8F9' : '#63B3ED';
+    const communityGradientTo = mode === 'pro' ? '#083344' : '#BEE3F8';
+    
+    const communityGradient = defs.append('linearGradient')
+      .attr('id', uniqueId)
+      .attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '0%').attr('y2', '100%');
+    communityGradient.append('stop').attr('offset', '0%').attr('stop-color', communityGradientFrom).attr('stop-opacity', 0.7);
+    communityGradient.append('stop').attr('offset', '100%').attr('stop-color', communityGradientTo).attr('stop-opacity', 0.1);
+
+    // User distribution gradient
+    const userGradientFrom = mode === 'pro' ? '#FBBF24' : '#F59E0B';
+    const userGradientTo = mode === 'pro' ? '#92400E' : '#B45309';
+    
+    const userGradient = defs.append('linearGradient')
+      .attr('id', normalGradientId)
+      .attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '0%').attr('y2', '100%');
+    userGradient.append('stop').attr('offset', '0%').attr('stop-color', userGradientFrom).attr('stop-opacity', 0.7);
+    userGradient.append('stop').attr('offset', '100%').attr('stop-color', userGradientTo).attr('stop-opacity', 0.1);
+
+    // Create groups to hold the curves that will be updated
+    chartArea.append('g').attr('class', 'community-curve');
+    chartArea.append('g').attr('class', 'user-curve');
+
+    // Add hover elements
+    chartArea.append('line')
+      .attr('class', 'hover-line')
       .attr('stroke', textColor)
       .attr('stroke-width', 1)
       .attr('stroke-dasharray', '3,3')
       .style('opacity', 0);
 
-    const hoverCircle = chartArea.append('circle')
+    chartArea.append('circle')
+      .attr('class', 'hover-circle')
       .attr('fill', 'none')
       .attr('stroke', textColor)
       .attr('r', 4)
@@ -488,8 +400,77 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
         .style('z-index', '1000')
         .node();
     }
-
+    
     const tooltip = d3.select(tooltipRef.current);
+
+    // Set up mouse interaction
+    svg.on('mousemove', (event) => {
+      if (!xScaleRef.current || !yScaleRef.current || !chartAreaRef.current || !domainRef.current) return;
+      
+      const [pointerX] = d3.pointer(event, chartAreaRef.current.node());
+      const mouseXValue = xScaleRef.current.invert(pointerX);
+      const { minX, maxX } = domainRef.current;
+      
+      if (mouseXValue < minX || mouseXValue > maxX) {
+        chartArea.select('.hover-line').style('opacity', 0);
+        chartArea.select('.hover-circle').style('opacity', 0);
+        tooltip.style('opacity', 0);
+        return;
+      }
+
+      // Calculate probabilities at mouse position
+      const communityMean = d3.mean(numericData, d => d.x) ?? 0;
+      const communityStdDev = (d3.deviation(numericData, d => d.x) ?? 1) * 0.4;
+      
+      const communityProb = showCDF 
+        ? normalCDF(mouseXValue, communityMean, communityStdDev)
+        : normalPDF(mouseXValue, communityMean, communityStdDev);
+
+      // Update hover elements
+      chartArea.select('.hover-line')
+        .attr('x1', pointerX)
+        .attr('x2', pointerX)
+        .attr('y1', yScaleRef.current(0))
+        .attr('y2', yScaleRef.current(communityProb))
+        .style('opacity', 1);
+
+      chartArea.select('.hover-circle')
+        .attr('cx', pointerX)
+        .attr('cy', yScaleRef.current(communityProb))
+        .style('opacity', 1);
+
+      // Update tooltip
+      const tooltipWidth = 150;
+      const tooltipHeight = 80;
+      const padding = 5;
+      
+      let left = event.clientX + padding;
+      let top = event.clientY - tooltipHeight - padding;
+      
+      if (left + tooltipWidth > window.innerWidth) {
+        left = event.clientX - tooltipWidth - padding;
+      }
+      if (top < 0) {
+        top = event.clientY + padding;
+      }
+
+      tooltip
+        .style('opacity', 0.95)
+        .html(`
+          <div class="font-medium">${formatXAxisLabel(mouseXValue)}</div>
+          <div class="text-sm mt-1">
+            Community: ${formatXAxisLabel(communityMean)}
+            ${typeof meanValue === 'number' && !isNaN(meanValue) ? `<br/>Your Prediction: ${formatXAxisLabel(meanValue)}` : ''}
+          </div>
+        `)
+        .style('left', `${left}px`)
+        .style('top', `${top}px`)
+        .style('position', 'fixed');
+    }).on('mouseleave', () => {
+      chartArea.select('.hover-line').style('opacity', 0);
+      chartArea.select('.hover-circle').style('opacity', 0);
+      tooltip.style('opacity', 0);
+    });
 
     // Add outcome line if provided
     if (showOutcome && outcome !== undefined) {
@@ -497,6 +478,7 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       if (outcomeX !== undefined) {
         // Add outcome line
         svg.append('line')
+          .attr('class', 'outcome-line')
           .attr('x1', outcomeX)
           .attr('y1', 0)
           .attr('x2', outcomeX)
@@ -507,6 +489,7 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
 
         // Add outcome label
         svg.append('text')
+          .attr('class', 'outcome-label')
           .attr('x', outcomeX)
           .attr('y', 10)
           .attr('text-anchor', 'middle')
@@ -516,17 +499,94 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       }
     }
 
-  }, [data, mode, meanValue, stdDevValue, uniqueId, normalGradientId, showCDF, showOutcome, outcome]);
+    // Mark initialization as complete
+    isInitializedRef.current = true;
+  }, [numericData, mode, formatXAxisLabel, showCDF, uniqueId, normalGradientId, chartHeight, leftPaddingForYAxis, rightPadding, topPadding, bottomPadding, showOutcome, outcome]);
+
+  // Second useEffect - Update curves without redrawing axes
+  useEffect(() => {
+    if (!isInitializedRef.current || !chartAreaRef.current || !xScaleRef.current || !yScaleRef.current || !domainRef.current || !communityStatsRef.current) {
+      return;
+    }
+
+    const { minX, maxX } = domainRef.current;
+    const xScale = xScaleRef.current;
+    const yScale = yScaleRef.current;
+    const chartArea = chartAreaRef.current;
+    const { mean: communityMean, stdDev: communityStdDev } = communityStatsRef.current;
+
+    // Theme colors
+    const communityLineColor = mode === 'pro' ? '#67E8F9' : '#63B3ED';
+    const userLineColor = mode === 'pro' ? '#FBBF24' : '#F59E0B';
+
+    // Line and Area generators
+    const lineGenerator = d3.line<NumericPoint>()
+      .x(d => xScale(d.x))
+      .y(d => yScale(d.y))
+      .curve(d3.curveCatmullRom.alpha(0.5));
+
+    const areaGenerator = d3.area<NumericPoint>()
+      .x(d => xScale(d.x))
+      .y0(yScale(0))
+      .y1(d => yScale(d.y))
+      .curve(d3.curveCatmullRom.alpha(0.5));
+
+    // Generate community curve (using fixed stats)
+    const communityCurve = showCDF 
+      ? generateNormalCurve(communityMean, communityStdDev, minX, maxX).map(point => ({
+          x: point.x,
+          y: normalCDF(point.x, communityMean, communityStdDev)
+        }))
+      : generateNormalCurve(communityMean, communityStdDev, minX, maxX);
+    
+    // Update community curve
+    const communityGroup = chartArea.select('.community-curve');
+    communityGroup.selectAll('*').remove();
+    
+    communityGroup.append('path')
+      .datum(communityCurve)
+      .attr('fill', `url(#${uniqueId})`)
+      .attr('d', areaGenerator);
+    
+    communityGroup.append('path')
+      .datum(communityCurve)
+      .attr('fill', 'none')
+      .attr('stroke', communityLineColor)
+      .attr('stroke-width', 2)
+      .attr('d', lineGenerator);
+
+    // Draw User's Distribution if provided
+    if (typeof meanValue === 'number' && typeof stdDevValue === 'number') {
+      // Generate user curve
+      const userCurve = showCDF
+        ? generateNormalCurve(meanValue, stdDevValue, minX, maxX).map(point => ({
+            x: point.x,
+            y: normalCDF(point.x, meanValue, stdDevValue)
+          }))
+        : generateNormalCurve(meanValue, stdDevValue, minX, maxX);
+      
+      // Update user curve
+      const userGroup = chartArea.select('.user-curve');
+      userGroup.selectAll('*').remove();
+      
+      userGroup.append('path')
+        .datum(userCurve)
+        .attr('fill', `url(#${normalGradientId})`)
+        .attr('d', areaGenerator);
+        
+      userGroup.append('path')
+        .datum(userCurve)
+        .attr('fill', 'none')
+        .attr('stroke', userLineColor)
+        .attr('stroke-width', 2)
+        .attr('d', lineGenerator);
+    }
+
+  }, [numericData, meanValue, stdDevValue, mode, showCDF, uniqueId, normalGradientId]);
+
   return (
-    <div style={{ 
-      width: '100%', 
-      height: '100%', 
-      minHeight: typeof height === 'number' ? height + 100 : 520, 
-      position: 'relative' 
-    }}>
-      <svg ref={svgRef} width="100%" height={chartHeight} style={{ minHeight: chartHeight }}>
-        {/* D3 renders here */}
-      </svg>
+    <div className={`w-full rounded-lg p-4`} style={{ minHeight: '420px', background: 'transparent' }}>
+      <svg ref={svgRef} className="w-full" style={{ display: 'block', minHeight: chartHeight }}></svg>
     </div>
   );
 };

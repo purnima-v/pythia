@@ -180,10 +180,6 @@ const MultiSlider: FC<Props> = ({
         track: 'absolute h-[3px] bg-blue-500 dark:bg-blue-400',
         handle: 'handle-class',
       }}
-      marks={{
-        [min]: min,
-        [max]: max
-      }}
       included={true}
     />
   );

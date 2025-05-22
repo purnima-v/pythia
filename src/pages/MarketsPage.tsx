@@ -1,10 +1,17 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import MarketCard, { type Market } from '../components/pythia/MarketCard.tsx';
 import { useMode } from '../components/pythia/Layout.tsx';
+import { randomNormal } from 'd3-random';
 
-// Mock Data for Markets
-export const mockMarkets: Market[] = [
+// helper to generate a normal distribution of x-values
+function makeNormalData(mu: number, sigma: number, n = 200) {
+  const sampler = randomNormal(mu, sigma);
+  return Array.from({ length: n }, () => ({ x: sampler() }));
+}
+
+// Mock Data for Markets, now with distributionData
+export const mockMarkets: Array<Market & { distributionData?: { x: number }[] }> = [
   {
     id: '0x1' as `0x${string}`,
     shortDescription: 'ETH/USD price by EOD on July 30, 2024?',
@@ -16,7 +23,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(250),
     totalBacking: BigInt(1200000),
     hasSettled: false,
-    category: 'Crypto'
+    category: 'Crypto',
+    distributionData: makeNormalData(3500, 250)
   },
   {
     id: '0x2' as `0x${string}`,
@@ -29,7 +37,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(25),
     totalBacking: BigInt(300000),
     hasSettled: false,
-    category: 'Climate'
+    category: 'Climate',
+    distributionData: makeNormalData(150, 25)
   },
   {
     id: '0x3' as `0x${string}`,
@@ -42,7 +51,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(10),
     totalBacking: BigInt(750000),
     hasSettled: false,
-    category: 'Technology'
+    category: 'Technology',
+    distributionData: makeNormalData(25, 10)
   },
   {
     id: '0x4' as `0x${string}`,
@@ -55,7 +65,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(2),
     totalBacking: BigInt(2500000),
     hasSettled: false,
-    category: 'Politics'
+    category: 'Politics',
+    distributionData: makeNormalData(45, 2)
   },
   {
     id: '0x5' as `0x${string}`,
@@ -68,7 +79,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(5),
     totalBacking: BigInt(500000),
     hasSettled: false,
-    category: 'Economics'
+    category: 'Economics',
+    distributionData: makeNormalData(30, 5)
   },
   {
     id: '0x6' as `0x${string}`,
@@ -81,7 +93,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(5),
     totalBacking: BigInt(450000),
     hasSettled: false,
-    category: 'Space'
+    category: 'Space',
+    distributionData: makeNormalData(10, 5)
   },
   {
     id: '0x7' as `0x${string}`,
@@ -94,7 +107,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(20),
     totalBacking: BigInt(200000),
     hasSettled: false,
-    category: 'Entertainment'
+    category: 'Entertainment',
+    distributionData: makeNormalData(70, 20)
   },
   {
     id: '0x8' as `0x${string}`,
@@ -107,7 +121,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(15),
     totalBacking: BigInt(900000),
     hasSettled: false,
-    category: 'Stocks'
+    category: 'Stocks',
+    distributionData: makeNormalData(240, 15)
   },
   {
     id: '0x9' as `0x${string}`,
@@ -120,7 +135,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(1),
     totalBacking: BigInt(1800000),
     hasSettled: false,
-    category: 'Sports'
+    category: 'Sports',
+    distributionData: makeNormalData(2, 1)
   },
   {
     id: '0x10' as `0x${string}`,
@@ -133,7 +149,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(5),
     totalBacking: BigInt(600000),
     hasSettled: false,
-    category: 'Technology'
+    category: 'Technology',
+    distributionData: makeNormalData(10, 5)
   },
   {
     id: '0x11' as `0x${string}`,
@@ -146,7 +163,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(5),
     totalBacking: BigInt(700000),
     hasSettled: false,
-    category: 'Automotive'
+    category: 'Automotive',
+    distributionData: makeNormalData(25, 5)
   },
   {
     id: '0x12' as `0x${string}`,
@@ -159,7 +177,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(10),
     totalBacking: BigInt(400000),
     hasSettled: false,
-    category: 'Energy'
+    category: 'Energy',
+    distributionData: makeNormalData(20, 10)
   },
   {
     id: '0x13' as `0x${string}`,
@@ -172,7 +191,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(150),
     totalBacking: BigInt(150000),
     hasSettled: false,
-    category: 'Demographics'
+    category: 'Demographics',
+    distributionData: makeNormalData(9700, 150)
   },
   {
     id: '0x14' as `0x${string}`,
@@ -185,7 +205,8 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(3),
     totalBacking: BigInt(320000),
     hasSettled: false,
-    category: 'Space'
+    category: 'Space',
+    distributionData: makeNormalData(5, 3)
   },
   {
     id: '0x15' as `0x${string}`,
@@ -198,14 +219,30 @@ export const mockMarkets: Market[] = [
     standardDeviation: BigInt(50000),
     totalBacking: BigInt(3100000),
     hasSettled: false,
-    category: 'Crypto'
+    category: 'Crypto',
+    distributionData: makeNormalData(150000, 50000)
+  },
+  {
+    id: '0x16' as `0x${string}`,
+    shortDescription: 'Will Bitcoin ETF be approved in 2024?',
+    fullDescription: 'Will a Bitcoin spot ETF be approved by the SEC in 2024?',
+    imageURL: '',
+    hasExpirationDate: true,
+    expirationDate: BigInt(new Date('2024-12-31').getTime() / 1000),
+    mean: BigInt(0), // Not used for discrete
+    standardDeviation: BigInt(0), // Not used for discrete
+    totalBacking: BigInt(500000),
+    hasSettled: false,
+    category: 'Crypto',
+    discreteOptions: ['Yes', 'No'],
   }
 ];
 
 export default function MarketsPage() {
   const { mode } = useMode();
-  const [searchParams] = useSearchParams();
-  const categoryFilter = searchParams.get('category');
+  const location = useLocation();
+  const urlSearchParams = new window.URLSearchParams(location.search);
+  const categoryFilter = urlSearchParams.get('category');
 
   const containerBgColor = mode === 'pro' ? 'bg-poseidon-deep-blue' : 'bg-light-bg';
 
@@ -218,7 +255,6 @@ export default function MarketsPage() {
 
   return (
     <div className={`p-4 sm:p-6 md:p-8 min-h-screen ${containerBgColor}`}>
-      {/* <h1 className={`text-4xl font-bold mb-8 text-center ${titleColor} font-serif`}>Whispers from the Depths</h1> */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMarkets.map(market => (
           <MarketCard key={market.id} market={market} mode={mode} />
@@ -226,4 +262,4 @@ export default function MarketsPage() {
       </div>
     </div>
   );
-} 
+}

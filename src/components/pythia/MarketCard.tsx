@@ -14,6 +14,7 @@ export interface Market {
   totalBacking: bigint;
   hasSettled: boolean;
   category: string;
+  discreteOptions?: string[];
 }
 
 interface MarketCardProps {
@@ -60,18 +61,31 @@ export default function MarketCard({ market, mode }: MarketCardProps) {
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ring-1 mb-2 ${categoryBgColor} ${categoryTextColor} ${categoryRingColor}`}>
           {market.category}
         </span>
-        <h3 className={`font-semibold text-base mb-4 min-h-[48px] ${questionTextColor}`}>
+        <h3 className={`font-semibold text-base mb-2 min-h-[10px] ${questionTextColor}`}>
           {market.shortDescription}
         </h3>
+        {/* Show discrete options as pills in novice mode */}
+        {mode === 'novice' && market.discreteOptions && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {market.discreteOptions.map(option => (
+              <span
+                key={option}
+                className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 font-semibold"
+              >
+                {option}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Distribution Chart */}
       {mode === 'pro' && (
-        <div className="w-full mb-4" style={{ height: '180px' }}>
+        <div className="w-full mb-4 mt-0" style={{ height: '200px' }}>
           <DistributionChart 
             data={distributionData} 
             mode={mode} 
-            height={180} 
+            height={200} 
           />
         </div>
       )}

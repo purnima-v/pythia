@@ -90,7 +90,7 @@ export default function ResolvedMarketPage() {
           {resolvedMarket.distributionData && (
             <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
               <h2 className="text-xl font-semibold mb-4">Final Distribution</h2>
-              <div className="h-80 md:h-80 lg:h-96 w-full" style={{ minHeight: '350px' }}>
+              <div className="w-full" style={{ height: '420px', minHeight: '420px' }}>
                 <DistributionChart
                   data={resolvedMarket.distributionData}
                   mode={mode}
