@@ -266,6 +266,7 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
     const parentWidth = (svgRef.current.parentNode as HTMLElement)?.getBoundingClientRect().width || 300;
     const chartWidth = parentWidth - leftPaddingForYAxis - rightPadding;
 
+<<<<<<< Updated upstream
     // Calculate fixed min and max for x-axis based on the original data
     const minX = d3.min(numericData, d => d.x) ?? 0;
     const maxX = d3.max(numericData, d => d.x) ?? 100;
@@ -275,13 +276,41 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
     const communityMean = d3.mean(numericData, d => d.x) ?? 0;
     const communityStdDev = (d3.deviation(numericData, d => d.x) ?? 1) * 0.4;
     communityStatsRef.current = { mean: communityMean, stdDev: communityStdDev };
+=======
+    // Fixed x-axis bounds
+    const minX = 2000;
+    const maxX = 8000;
+
+    // Calculate community distribution parameters
+    const communityMean = d3.mean(numericData, d => d.x) ?? 0;
+    const communityStdDev = (d3.deviation(numericData, d => d.x) ?? 1) * 0.4; // Reduce standard deviation to 40% of original
+
+    // Generate community normal distribution curve with fixed bounds
+    const communityCurve = showCDF 
+      ? generateNormalCurve(communityMean, communityStdDev, minX, maxX).map((point, i, arr) => ({
+          x: point.x,
+          y: normalCDF(point.x, communityMean, communityStdDev)
+        }))
+      : generateNormalCurve(communityMean, communityStdDev, minX, maxX);
+>>>>>>> Stashed changes
 
     // Theme colors
     const axisColor = mode === 'pro' ? '#B0C4DE' : '#A0AEC0';
     const gridColor = mode === 'pro' ? '#2D3748' : '#E2E8F0';
     const textColor = mode === 'pro' ? '#E1F5FE' : '#4A5562';
+<<<<<<< Updated upstream
     
     // Create scales with FIXED domain based on the data
+=======
+    const communityLineColor = mode === 'pro' ? '#67E8F9' : '#63B3ED';
+    const userLineColor = mode === 'pro' ? '#FBBF24' : '#F59E0B';
+    const communityGradientFrom = mode === 'pro' ? '#67E8F9' : '#63B3ED';
+    const communityGradientTo = mode === 'pro' ? '#083344' : '#BEE3F8';
+    const userGradientFrom = mode === 'pro' ? '#FBBF24' : '#F59E0B';
+    const userGradientTo = mode === 'pro' ? '#92400E' : '#B45309';
+
+    // Create scales with fixed bounds
+>>>>>>> Stashed changes
     const xScale = d3.scaleLinear()
       .domain([minX, maxX])
       .range([0, chartWidth]);
@@ -308,9 +337,85 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
     const chartArea = svg.append('g')
       .attr('transform', `translate(${leftPaddingForYAxis}, ${topPadding})`);
     
+<<<<<<< Updated upstream
     chartAreaRef.current = chartArea;
+=======
+    // Community distribution gradient
+    const communityGradient = defs.append('linearGradient')
+      .attr('id', uniqueId)
+      .attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '0%').attr('y2', '100%');
+    communityGradient.append('stop').attr('offset', '0%').attr('stop-color', communityGradientFrom).attr('stop-opacity', 0.7);
+    communityGradient.append('stop').attr('offset', '100%').attr('stop-color', communityGradientTo).attr('stop-opacity', 0.1);
 
-    // Add axes
+    // User distribution gradient
+    const userGradient = defs.append('linearGradient')
+      .attr('id', normalGradientId)
+      .attr('x1', '0%').attr('y1', '0%')
+      .attr('x2', '0%').attr('y2', '100%');
+    userGradient.append('stop').attr('offset', '0%').attr('stop-color', userGradientFrom).attr('stop-opacity', 0.7);
+    userGradient.append('stop').attr('offset', '100%').attr('stop-color', userGradientTo).attr('stop-opacity', 0.1);
+
+    // Line and Area generators
+    const lineGenerator = d3.line<NumericPoint>()
+      .x(d => xScale(d.x) ?? 0)
+      .y(d => yScale(d.y) ?? 0)
+      .curve(d3.curveCatmullRom.alpha(0.5));
+
+    const areaGenerator = d3.area<NumericPoint>()
+      .x(d => xScale(d.x) ?? 0)
+      .y0(yScale(0) ?? 0)
+      .y1(d => yScale(d.y) ?? 0)
+      .curve(d3.curveCatmullRom.alpha(0.5));
+
+    // Draw Community Distribution
+    chartArea.append('path')
+      .datum(communityCurve)
+      .attr('fill', `url(#${uniqueId})`)
+      .attr('d', areaGenerator);
+
+    chartArea.append('path')
+      .datum(communityCurve)
+      .attr('fill', 'none')
+      .attr('stroke', communityLineColor)
+      .attr('stroke-width', 2)
+      .attr('d', lineGenerator);
+
+    // Draw User's Distribution if provided
+    let userCurve: NumericPoint[] = [];
+    if (typeof meanValue === 'number' && typeof stdDevValue === 'number') {
+      userCurve = showCDF
+        ? generateNormalCurve(meanValue, stdDevValue, minX, maxX).map((point, i, arr) => ({
+            x: point.x,
+            y: normalCDF(point.x, meanValue, stdDevValue)
+          }))
+        : generateNormalCurve(meanValue, stdDevValue, minX, maxX);
+
+      // Scale the user's curve to match the community curve's height
+      const maxCommunityY = d3.max(communityCurve, d => d.y) ?? 1;
+      const maxUserY = d3.max(userCurve, d => d.y) ?? 1;
+      const scaleFactor = maxCommunityY / maxUserY;
+      
+      const scaledUserCurve = userCurve.map(d => ({
+        x: d.x,
+        y: d.y * scaleFactor
+      }));
+
+      chartArea.append('path')
+        .datum(scaledUserCurve)
+        .attr('fill', `url(#${normalGradientId})`)
+        .attr('d', areaGenerator);
+
+      chartArea.append('path')
+        .datum(scaledUserCurve)
+        .attr('fill', 'none')
+        .attr('stroke', userLineColor)
+        .attr('stroke-width', 2)
+        .attr('d', lineGenerator);
+    }
+>>>>>>> Stashed changes
+
+    // Add axes with fixed bounds
     const xAxis = d3.axisBottom(xScale)
       .ticks(chartWidth / 80)
       .tickFormat((d) => formatXAxisLabel(d as number));
@@ -403,6 +508,7 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
     
     const tooltip = d3.select(tooltipRef.current);
 
+<<<<<<< Updated upstream
     // Set up mouse interaction
     svg.on('mousemove', (event) => {
       if (!xScaleRef.current || !yScaleRef.current || !chartAreaRef.current || !domainRef.current) return;
@@ -414,10 +520,21 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       if (mouseXValue < minX || mouseXValue > maxX) {
         chartArea.select('.hover-line').style('opacity', 0);
         chartArea.select('.hover-circle').style('opacity', 0);
+=======
+    // Add mouse interaction
+    svg.on('mousemove', (event) => {
+      const [pointerX] = d3.pointer(event, chartArea.node());
+      const mouseXValue = xScale.invert(pointerX);
+
+      if (mouseXValue < minX || mouseXValue > maxX) {
+        hoverLine.style('opacity', 0);
+        hoverCircle.style('opacity', 0);
+>>>>>>> Stashed changes
         tooltip.style('opacity', 0);
         return;
       }
 
+<<<<<<< Updated upstream
       // Calculate probabilities at mouse position
       const communityMean = d3.mean(numericData, d => d.x) ?? 0;
       const communityStdDev = (d3.deviation(numericData, d => d.x) ?? 1) * 0.4;
@@ -437,6 +554,37 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
       chartArea.select('.hover-circle')
         .attr('cx', pointerX)
         .attr('cy', yScaleRef.current(communityProb))
+=======
+      // Calculate community and user probabilities at mouse position
+      const communityProb = showCDF 
+        ? normalCDF(mouseXValue, communityMean, communityStdDev)
+        : normalPDF(mouseXValue, communityMean, communityStdDev);
+      
+      let userProb = null;
+      if (typeof meanValue === 'number' && typeof stdDevValue === 'number') {
+        const userProbRaw = showCDF
+          ? normalCDF(mouseXValue, meanValue, stdDevValue)
+          : normalPDF(mouseXValue, meanValue, stdDevValue);
+        
+        // Scale user probability to match community curve height
+        const maxCommunityY = d3.max(communityCurve, d => d.y) ?? 1;
+        const maxUserY = d3.max(userCurve, d => d.y) ?? 1;
+        const scaleFactor = maxCommunityY / maxUserY;
+        userProb = userProbRaw * scaleFactor;
+      }
+
+      // Update hover elements
+      hoverLine
+        .attr('x1', pointerX)
+        .attr('x2', pointerX)
+        .attr('y1', yScale(0))
+        .attr('y2', yScale(communityProb))
+        .style('opacity', 1);
+
+      hoverCircle
+        .attr('cx', pointerX)
+        .attr('cy', yScale(communityProb))
+>>>>>>> Stashed changes
         .style('opacity', 1);
 
       // Update tooltip
@@ -460,20 +608,29 @@ const DistributionChart: React.FC<DistributionChartProps> = ({
           <div class="font-medium">${formatXAxisLabel(mouseXValue)}</div>
           <div class="text-sm mt-1">
             Community: ${formatXAxisLabel(communityMean)}
+<<<<<<< Updated upstream
             ${typeof meanValue === 'number' && !isNaN(meanValue) ? `<br/>Your Prediction: ${formatXAxisLabel(meanValue)}` : ''}
+=======
+            ${userProb !== null ? `<br/>Your Prediction: ${formatXAxisLabel(meanValue)}` : ''}
+>>>>>>> Stashed changes
           </div>
         `)
         .style('left', `${left}px`)
         .style('top', `${top}px`)
         .style('position', 'fixed');
     }).on('mouseleave', () => {
+<<<<<<< Updated upstream
       chartArea.select('.hover-line').style('opacity', 0);
       chartArea.select('.hover-circle').style('opacity', 0);
+=======
+      hoverLine.style('opacity', 0);
+      hoverCircle.style('opacity', 0);
+>>>>>>> Stashed changes
       tooltip.style('opacity', 0);
     });
 
     // Add outcome line if provided
-    if (showOutcome && outcome !== undefined) {
+    if (showOutcome && typeof outcome === 'number') {
       const outcomeX = xScale(outcome);
       if (outcomeX !== undefined) {
         // Add outcome line

@@ -2,7 +2,7 @@ import React, { useState, type MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DistributionChart from './DistributionChart.tsx';
 
-export interface Market {
+export type Market = {
   id: `0x${string}`;
   shortDescription: string;
   fullDescription: string;
@@ -14,8 +14,13 @@ export interface Market {
   totalBacking: bigint;
   hasSettled: boolean;
   category: string;
+<<<<<<< Updated upstream
   discreteOptions?: string[];
 }
+=======
+  xPoints?: number[];
+};
+>>>>>>> Stashed changes
 
 interface MarketCardProps {
   market: Market;
