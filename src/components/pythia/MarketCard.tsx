@@ -19,9 +19,10 @@ export interface Market {
 interface MarketCardProps {
   market: Market;
   mode: 'pro' | 'novice';
+  chainTag?: string;
 }
 
-export default function MarketCard({ market, mode }: MarketCardProps) {
+export default function MarketCard({ market, mode, chainTag }: MarketCardProps) {
   const navigate = useNavigate();
   
   // Theme-specific classes
@@ -57,9 +58,16 @@ export default function MarketCard({ market, mode }: MarketCardProps) {
     >
       {/* Category and Title */}
       <div>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ring-1 mb-2 ${categoryBgColor} ${categoryTextColor} ${categoryRingColor}`}>
-          {market.category}
-        </span>
+        <div className="flex items-center mb-2 flex-wrap">
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ring-1 mr-2 ${categoryBgColor} ${categoryTextColor} ${categoryRingColor}`}>
+            {market.category}
+          </span>
+          {chainTag && (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ring-1 bg-purple-500 text-white ring-purple-600`}>
+              {chainTag}
+            </span>
+          )}
+        </div>
         <h3 className={`font-semibold text-base mb-4 min-h-[48px] ${questionTextColor}`}>
           {market.shortDescription}
         </h3>

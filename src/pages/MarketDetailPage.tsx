@@ -249,6 +249,13 @@ export default function MarketDetailPage() {
       center: mean,
       right: mean + stdDev
     });
+
+    // Update the distribution series with new mean and stdDev
+    // Keep the same x-axis range but update the y values
+    const newSeries = buildNormalSeries(mean, stdDev);
+    setSeries(newSeries);
+    setMeanValue(mean);
+    setStdDevValue(stdDev);
   };
 
   const bgColor = mode === 'pro' ? 'bg-poseidon-dark-blue' : 'bg-light-background';
@@ -334,18 +341,24 @@ export default function MarketDetailPage() {
   //   }
   // };
   const handlePlaceBet = async () => {
-  
+    if (!market || user_mean === null || user_stdDev === null) {
+      toast({
+        title: 'Error',
+        description: 'Market data or prediction values are missing.',
+        variant: 'destructive'
+      });
+      return;
+    }
   
     try {
-  
       await writeContract({
-        address: marketId as `0x${string}`,
+        address: marketId as `0x${string}`, // <- your contract address
         abi: ROUTER_ABI,
         functionName: 'buyETH',         // <- your Solidity fn name
         args: [
-          market.id,
-          user_mean,
-          user_stdDev
+          market.id, // market is now guaranteed to be non-null
+          BigInt(Math.round(user_mean)), // Convert to BigInt, user_mean is non-null
+          BigInt(Math.round(user_stdDev)) // Convert to BigInt, user_stdDev is non-null
         ],
         // If collateral is sent as msg.value, add:
         // value: parseEther(collateralInput),
@@ -414,10 +427,13 @@ export default function MarketDetailPage() {
   //   return <div className={p-4 ${mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text'}}>Market not found</div>;
   // }
   const buildNormalSeries = (mu: number, sig: number, span = 4, n = 200) => {
-    const step = (2 * span * sig) / (n - 1);
+    // Use the fixed x-axis range
+    const min = xSliderMin;
+    const max = xSliderMax;
+    const step = (max - min) / (n - 1);
     const data = [];
     for (let i = 0; i < n; i++) {
-      const x = mu - span * sig + i * step;
+      const x = min + i * step;
       const z = (x - mu) / sig;
       const y = Math.exp(-0.5 * z * z) / (sig * Math.sqrt(2 * Math.PI));
       data.push({ x, y });
@@ -428,11 +444,37 @@ export default function MarketDetailPage() {
   const [series, setSeries] = useState<{ x: number; y: number }[]>([]);
 
 useEffect(() => {
-  if (meanValue !== null && stdDevValue !== null) {
-    setSeries(buildNormalSeries(meanValue, stdDevValue));
-    setNumericXData(series.map(p => p.x));          // keeps quartile helpers working
-  }
-}, [meanValue, stdDevValue]);
+  if (!market) return;
+
+  // Convert bigint values to numbers
+  const marketMean = Number(market.mean);
+  const marketStdDev = Number(market.standardDeviation);
+  
+  // Set fixed axes range based on market values
+  const marketMin = marketMean - 4 * marketStdDev;
+  const marketMax = marketMean + 4 * marketStdDev;
+  setXSliderMin(marketMin);
+  setXSliderMax(marketMax);
+
+  // Generate initial distribution series
+  setSeries(buildNormalSeries(marketMean, marketStdDev));
+  
+  // Update numericXData based on the series for quartile calculations
+  const initialSeries = buildNormalSeries(marketMean, marketStdDev);
+  setNumericXData(initialSeries.map(p => p.x));
+
+  // Set initial slider values
+  setSliderNumericValues({
+    left: marketMean - marketStdDev,
+    center: marketMean,
+    right: marketMean + marketStdDev,
+  });
+
+  // Set initial mean and stdDev values
+  setMeanValue(marketMean);
+  setStdDevValue(marketStdDev);
+
+}, [market]); // Only run when market changes
 
 
   const yValueForX = (xVal: number | null) => { // xVal is now number
@@ -480,7 +522,7 @@ useEffect(() => {
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Main Content Area */}
         <div className="lg:w-2/3 w-full">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-6">{market?.shortDescription}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-6">ETH/USD price by EOD on July 30, 2024?</h1>
 
           {/* Distribution Chart Area */}
           {series && mode === 'pro' && (
@@ -890,16 +932,9 @@ useEffect(() => {
           <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">Market Info</h3>
             <ul className="space-y-1 text-sm">
-              <li><strong>Resolution Criteria:</strong> To be defined.</li>
+              <li><strong>Resolution Criteria:</strong> Price as of 00:00:00 July 30, 2024</li>
               <li>
-                <strong>Ends:</strong>{' '}
-                {market?.expirationDate
-                  ? new Date(Number(market.expirationDate) * 1000).toLocaleDateString('en-US', {
-                      year:  'numeric',
-                      month: 'long',
-                      day:   'numeric'
-                    })
-                  : 'TBD'}
+                <strong>Ends:</strong> July 30, 2024
               </li>
               <li><strong>Source:</strong> Official Pythia Oracle</li>
               <li className="mt-4">
@@ -955,6 +990,14 @@ useEffect(() => {
                 <li><a href="#" className={`${mode === 'pro' ? 'text-poseidon-accent-cyan hover:underline' : 'text-light-accent hover:underline'}`}>Related News Article 1</a></li>
                 <li><a href="#" className={`${mode === 'pro' ? 'text-poseidon-accent-cyan hover:underline' : 'text-light-accent hover:underline'}`}>Analysis Blog Post</a></li>
             </ul>
+          </div>
+
+          {/* Chain Section */}
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
+            <h3 className="text-lg font-semibold mb-3">Chain</h3>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${mode === 'pro' ? 'bg-poseidon-deep-blue text-teal-300 ring-1 ring-teal-400' : 'bg-sky-100 text-sky-700 ring-1 ring-sky-200'}`}>
+              supersimL2B
+            </span>
           </div>
 
         </div>

@@ -16,6 +16,8 @@ const Header: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            {/* Chain Indicator */}
+            <span className="text-sm text-gray-500 dark:text-gray-400">supersimL2A</span>
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

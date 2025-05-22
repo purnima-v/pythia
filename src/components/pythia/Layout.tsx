@@ -149,8 +149,9 @@ export default function Layout({ children }: LayoutProps) {
 
     const filtered = mockMarkets
       .filter((market: Market) => 
-        market.question.toLowerCase().includes(query.toLowerCase())
+        market.shortDescription.toLowerCase().includes(query.toLowerCase())
       )
+      .map(market => ({ id: market.id, question: market.shortDescription })) // Map to the expected structure
       .slice(0, 5); // Show top 5 matches
 
     setSuggestions(filtered);
@@ -255,6 +256,9 @@ export default function Layout({ children }: LayoutProps) {
                     </div>
                   )}
                 </div>
+
+                {/* Chain Indicator */}
+                <span className={`text-sm ${logoTextColor} font-semibold mr-4`}>supersimL2A</span>
 
                 {/* Mode Toggle Button */}
                 <button

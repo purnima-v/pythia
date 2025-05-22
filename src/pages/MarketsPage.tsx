@@ -214,14 +214,14 @@ export default function MarketsPage() {
       return true;
     }
     return market.category?.toLowerCase() === categoryFilter.toLowerCase();
-  });
+  }).slice(0, 2);
 
   return (
     <div className={`p-4 sm:p-6 md:p-8 min-h-screen ${containerBgColor}`}>
       {/* <h1 className={`text-4xl font-bold mb-8 text-center ${titleColor} font-serif`}>Whispers from the Depths</h1> */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMarkets.map(market => (
-          <MarketCard key={market.id} market={market} mode={mode} />
+          <MarketCard key={market.id} market={market} mode={mode} chainTag="supersimL2B" />
         ))}
       </div>
     </div>
