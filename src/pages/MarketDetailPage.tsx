@@ -239,23 +239,29 @@ export default function MarketDetailPage() {
   // }, [sliderNumericValues]);
 
   // Handle slider changes to maintain symmetry
-  const handleSliderChange = (newValues: NumericSliderValue) => {
-    const mean = newValues.center;
-    const stdDev = Math.abs(newValues.right - mean);
+  const handleSliderChange = ({ left, center, right }: { left: number; center: number; right: number }) => {
+    const mean = center;
+    const stdDev = (right - left) / 2; // Calculate stdDev as half the width between left and right
     
-    // Ensure left and right markers are equidistant from center
+    // Update slider values to maintain symmetry
     setSliderNumericValues({
       left: mean - stdDev,
       center: mean,
       right: mean + stdDev
     });
-
-    // Update the distribution series with new mean and stdDev
-    // Keep the same x-axis range but update the y values
-    const newSeries = buildNormalSeries(mean, stdDev);
-    setSeries(newSeries);
+    
+    // Update mean and std dev
     setMeanValue(mean);
     setStdDevValue(stdDev);
+    
+    // Update both distributions
+    const fixedSeries = buildNormalSeries(2500, 200);
+    const dynamicSeries = buildNormalSeries(mean, stdDev);
+    
+    setSeries([
+      { name: 'Fixed Distribution', data: fixedSeries },
+      { name: 'Your Prediction', data: dynamicSeries }
+    ]);
   };
 
   const bgColor = mode === 'pro' ? 'bg-poseidon-dark-blue' : 'bg-light-background';
@@ -426,77 +432,124 @@ export default function MarketDetailPage() {
   // if (!market) {
   //   return <div className={p-4 ${mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text'}}>Market not found</div>;
   // }
-  const buildNormalSeries = (mu: number, sig: number, span = 4, n = 200) => {
-    // Use the fixed x-axis range
+  const buildNormalSeries = (mu: number, sig: number) => {
+    // Use the same x-axis range for both distributions
     const min = xSliderMin;
     const max = xSliderMax;
-    const step = (max - min) / (n - 1);
-    const data = [];
-    for (let i = 0; i < n; i++) {
+    const step = (max - min) / 100; // 100 points
+    const points = [];
+    
+    for (let i = 0; i <= 100; i++) {
       const x = min + i * step;
-      const z = (x - mu) / sig;
-      const y = Math.exp(-0.5 * z * z) / (sig * Math.sqrt(2 * Math.PI));
-      data.push({ x, y });
+      const y = (1 / (sig * Math.sqrt(2 * Math.PI))) * Math.exp(-Math.pow(x - mu, 2) / (2 * sig * sig));
+      points.push({ x, y });
     }
-    return data;
+    return points;
   };
 
-  const [series, setSeries] = useState<{ x: number; y: number }[]>([]);
+  const [series, setSeries] = useState<{ name: string; data: { x: number; y: number; }[] }[]>([]);
 
+// Initialize with fixed values
 useEffect(() => {
-  if (!market) return;
-
-  // Convert bigint values to numbers
-  const marketMean = Number(market.mean);
-  const marketStdDev = Number(market.standardDeviation);
+  // Set fixed distribution parameters
+  const fixedMean = 2500;
+  const fixedStdDev = 200;
   
-  // Set fixed axes range based on market values
-  const marketMin = marketMean - 4 * marketStdDev;
-  const marketMax = marketMean + 4 * marketStdDev;
-  setXSliderMin(marketMin);
-  setXSliderMax(marketMax);
-
-  // Generate initial distribution series
-  setSeries(buildNormalSeries(marketMean, marketStdDev));
+  // Calculate axes range based on fixed distribution
+  const span = 6 * fixedStdDev;
+  const min = fixedMean - span/2;
+  const max = fixedMean + span/2;
   
-  // Update numericXData based on the series for quartile calculations
-  const initialSeries = buildNormalSeries(marketMean, marketStdDev);
-  setNumericXData(initialSeries.map(p => p.x));
-
+  // Set initial values
+  setMeanValue(fixedMean);
+  setStdDevValue(fixedStdDev);
+  setXSliderMin(min);
+  setXSliderMax(max);
+  
+  // Generate initial series
+  const fixedSeries = buildNormalSeries(fixedMean, fixedStdDev);
+  const dynamicSeries = buildNormalSeries(fixedMean, fixedStdDev);
+  
+  setSeries([
+    { name: 'Fixed Distribution', data: fixedSeries },
+    { name: 'Your Prediction', data: dynamicSeries }
+  ]);
+  
   // Set initial slider values
   setSliderNumericValues({
-    left: marketMean - marketStdDev,
-    center: marketMean,
-    right: marketMean + marketStdDev,
+    left: fixedMean - fixedStdDev,
+    center: fixedMean,
+    right: fixedMean + fixedStdDev
   });
-
-  // Set initial mean and stdDev values
-  setMeanValue(marketMean);
-  setStdDevValue(marketStdDev);
-
-}, [market]); // Only run when market changes
+}, []); // Empty dependency array to run only once on mount
 
 
-  const yValueForX = (xVal: number | null) => { // xVal is now number
-    if (xVal === null || !series) return 0;
-    // Find closest point or interpolate if needed, for now, exact match
-    const point = series.find(d => +d.x === xVal);
+  const yValueForX = (xVal: number | null) => {
+    if (xVal === null || !series || series.length === 0) return 0;
+    // Find the dynamic distribution (Your Prediction)
+    const dynamicSeries = series.find(s => s.name === 'Your Prediction');
+    if (!dynamicSeries) return 0;
+    // Find closest point
+    const point = dynamicSeries.data.find(d => Math.abs(d.x - xVal) < 0.01);
     return point ? point.y : 0;
   };
 
-  // Approximations for community stats (can use numericXData now)
+  // Approximations for community stats
   const communityLower25 = numericXData.length > 0 ? (d3.quantile(numericXData, 0.25)?.toFixed(2) ?? 'N/A') : 'N/A';
   const communityMedian = numericXData.length > 0 ? (d3.quantile(numericXData, 0.50)?.toFixed(2) ?? 'N/A') : 'N/A';
   const communityUpper75 = numericXData.length > 0 ? (d3.quantile(numericXData, 0.75)?.toFixed(2) ?? 'N/A') : 'N/A';
-  
+
   const communityLastXProb = series && series.length > 0 
-    ? (yValueForX(+series[series.length - 1].x) * 100).toFixed(1) + '%' 
+    ? (yValueForX(series[1].data[series[1].data.length - 1].x) * 100).toFixed(1) + '%' 
     : 'N/A';
   const lastXLabel = numericXData.length > 0 ? `> ${numericXData[numericXData.length -1].toFixed(2)}` : '> Max';
 
   const [showResolutionModal, setShowResolutionModal] = useState(false);
   const [finalValue, setFinalValue] = useState<string>('');
   const [isResolving, setIsResolving] = useState(false);
+
+  // Add the handler functions
+  const handleMeanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value === '' ? null : Number(e.target.value);
+    setMeanValue(val);
+    if (val !== null && stdDevValue !== null) {
+      setSliderNumericValues({
+        left: val - stdDevValue,
+        center: val,
+        right: val + stdDevValue
+      });
+      
+      // Update both distributions
+      const fixedSeries = buildNormalSeries(2500, 200);
+      const dynamicSeries = buildNormalSeries(val, stdDevValue);
+      
+      setSeries([
+        { name: 'Fixed Distribution', data: fixedSeries },
+        { name: 'Your Prediction', data: dynamicSeries }
+      ]);
+    }
+  };
+
+  const handleStdDevChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value === '' ? null : Number(e.target.value);
+    setStdDevValue(val);
+    if (val !== null && meanValue !== null) {
+      setSliderNumericValues({
+        left: meanValue - val,
+        center: meanValue,
+        right: meanValue + val
+      });
+      
+      // Update both distributions
+      const fixedSeries = buildNormalSeries(2500, 200);
+      const dynamicSeries = buildNormalSeries(meanValue, val);
+      
+      setSeries([
+        { name: 'Fixed Distribution', data: fixedSeries },
+        { name: 'Your Prediction', data: dynamicSeries }
+      ]);
+    }
+  };
 
   return (
     <div className={`min-h-screen w-full p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor}`}>
@@ -525,21 +578,19 @@ useEffect(() => {
           <h1 className="text-2xl sm:text-3xl font-bold mb-6">ETH/USD price by EOD on July 30, 2024?</h1>
 
           {/* Distribution Chart Area */}
-          {series && mode === 'pro' && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
-              <h2 className="text-xl font-semibold mb-4">Community Prediction</h2>
-              <div className="h-80 md:h-80 lg:h-96 w-full" style={{ minHeight: '350px' }}>
-                <DistributionChart
-                  data={series}
-                  mode={mode}
-                  meanValue={meanValue}
-                  stdDevValue={stdDevValue}
-                  showCDF={predictionType === 'cdf'}
-                  height={420}
-                />
-              </div>
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
+            <h2 className="text-xl font-semibold mb-4">Distribution Comparison</h2>
+            <div className="h-80 md:h-80 lg:h-96 w-full" style={{ minHeight: '350px' }}>
+              <DistributionChart
+                data={series[1]?.data ?? []}
+                mode={mode}
+                meanValue={meanValue}
+                stdDevValue={stdDevValue}
+                showCDF={false}
+                height={400}
+              />
             </div>
-          )}
+          </div>
 
           {/* Discrete Distribution for Novice Mode */}
           {/*
@@ -570,61 +621,39 @@ useEffect(() => {
           */}
 
           {/* Slider and controls */}
-              {mode === 'pro' && sliderNumericValues && numericXData.length > 0 && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
-                  <MultiSlider
-                    min={xSliderMin}
-                    max={xSliderMax}
-                    step={Math.max(0.01, parseFloat(((xSliderMax - xSliderMin) / 100).toFixed(2)))}
-                    value={sliderNumericValues}
-                onChange={handleSliderChange}
-                    clampStep={Math.max(0.001, parseFloat(((xSliderMax - xSliderMin) / 200).toFixed(3)))}
-                    disabled={isMarketResolving}
-                  />
-                  <div className="flex justify-center gap-6 mt-6 flex-wrap items-center">
-                    <div className="flex flex-col items-center">
-                  <label htmlFor="mean-input" className="text-xs mb-1">Mean</label>
-                      <input
-                    id="mean-input"
-                    type="text"
-                    value={meanValue?.toFixed(2) ?? ''}
-                    onChange={e => {
-                      const val = e.target.value === '' ? null : Number(e.target.value);
-                      setMeanValue(val);
-                      if (val !== null && stdDevValue !== null) {
-                        setSliderNumericValues({
-                          left: val - stdDevValue,
-                          center: val,
-                          right: val + stdDevValue
-                        });
-                      }
-                    }}
-                    className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
-                  />
-                    </div>
-                    <div className="flex flex-col items-center">
-                  <label htmlFor="stddev-input" className="text-xs mb-1">Standard Deviation</label>
-                      <input
-                    id="stddev-input"
-                    type="text"
-                    value={stdDevValue?.toFixed(2) ?? ''}
-                    onChange={e => {
-                      const val = e.target.value === '' ? null : Number(e.target.value);
-                      setStdDevValue(val);
-                      if (val !== null && meanValue !== null) {
-                        setSliderNumericValues({
-                          left: meanValue - val,
-                          center: meanValue,
-                          right: meanValue + val
-                        });
-                      }
-                    }}
-                    className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
-                  />
-                    </div>
-                  </div>
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
+            <MultiSlider
+              min={xSliderMin}
+              max={xSliderMax}
+              step={Math.max(0.01, parseFloat(((xSliderMax - xSliderMin) / 100).toFixed(2)))}
+              value={sliderNumericValues}
+              onChange={handleSliderChange}
+              clampStep={Math.max(0.001, parseFloat(((xSliderMax - xSliderMin) / 200).toFixed(3)))}
+              disabled={isMarketResolving}
+            />
+            <div className="flex justify-center gap-6 mt-6 flex-wrap items-center">
+              <div className="flex flex-col items-center">
+                <label htmlFor="mean-input" className="text-xs mb-1">Mean</label>
+                <input
+                  id="mean-input"
+                  type="text"
+                  value={meanValue?.toFixed(2) ?? ''}
+                  onChange={handleMeanChange}
+                  className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
+                />
+              </div>
+              <div className="flex flex-col items-center">
+                <label htmlFor="stddev-input" className="text-xs mb-1">Standard Deviation</label>
+                <input
+                  id="stddev-input"
+                  type="text"
+                  value={stdDevValue?.toFixed(2) ?? ''}
+                  onChange={handleStdDevChange}
+                  className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
+                />
+              </div>
             </div>
-          )}
+          </div>
 
           {/* Tabs */}
           <div className="mb-6">
