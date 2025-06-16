@@ -186,7 +186,6 @@ export default function MarketDetailPage() {
           functionName: "marketMetadata"
         });
   
-<<<<<<< Updated upstream
         setMarket({
           id: marketId as `0x${string}`,
           shortDescription: marketMetadata[0],
@@ -227,70 +226,9 @@ export default function MarketDetailPage() {
   
     getMarketPosition();
   }, [marketId]);
-=======
-    // if (meanValue !== null && stdDevValue !== null && numericXData.length > 0) {
-    //   const communityMean = d3.mean(numericXData) ?? 0;
-    //   const communityStdDev = d3.deviation(numericXData) ?? 0;
-    //   const meanDiff = Math.abs(meanValue - communityMean);
-    //   const stdDevDiff = Math.abs(stdDevValue - communityStdDev);
-    //   const totalDiff = (meanDiff / communityMean) + (stdDevDiff / communityStdDev);
-    //   const baseCollateral = 100;
-    //   return Math.round(baseCollateral * (1 + totalDiff));
-    // }
-    // return 100;
 
-
-    const [kValue, setKValue] = useState<bigint | null>(null);
-
-    // Mock data for testing
-    useEffect(() => {
-      // Fixed x-axis bounds
-      const minX = 2000;
-      const maxX = 8000;
-      const xPoints = Array.from({ length: 200 }, (_, i) => minX + (i * (maxX - minX) / 199)); // 200 points evenly spaced
-
-      const mockMarket = {
-        id: marketId as `0x${string}`,
-        shortDescription: "Will ETH price exceed $5000 by end of 2024?",
-        fullDescription: "This market will resolve based on the ETH/USD price at 23:59:59 UTC on December 31, 2024.",
-        imageURL: "",
-        hasExpirationDate: true,
-        expirationDate: BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60),
-        mean: BigInt(4000),
-        standardDeviation: BigInt(500),
-        totalBacking: BigInt(1000000),
-        hasSettled: false,
-        category: "Crypto",
-        xPoints // Store fixed x-axis points
-      };
-
-      setMarket(mockMarket);
-      setNumericXData(xPoints);
-      setXSliderMin(minX);
-      setXSliderMax(maxX);
-
-      // Set initial slider values
-      setMeanValue(4000);
-      setStdDevValue(500);
-      setSliderNumericValues({
-        left: 3500,
-        center: 4000,
-        right: 4500
-      });
-
-      // Set initial series with fixed x-points
-      const initialSeries = xPoints.map(x => ({
-        x,
-        y: Math.exp(-Math.pow(x - 4000, 2) / (2 * Math.pow(500, 2))) / (500 * Math.sqrt(2 * Math.PI))
-      }));
-      setSeries(initialSeries);
-    }, [marketId]);
->>>>>>> Stashed changes
-
-  // Comment out contract calls
-  /*
+  const [requiredCollateral, setRequiredCollateral] = useState(100); 
   useEffect(() => {
-<<<<<<< Updated upstream
     if (!kValue || !market ) return;
     
     const getRequiredCollateral = async () => {
@@ -318,85 +256,6 @@ export default function MarketDetailPage() {
     kValue
   ]);
 
-=======
-    const getMarketPosition = async () => {
-      try {
-        if (!marketId) return;
-        
-        const marketPosition = await readContract(config, {
-          address: marketId as `0x${string}`,
-          abi: PAIR_ABI,
-          functionName: "getMarketPosition"
-        });
-        
-        const marketMetadata = await readContract(config, {
-          address: marketId as `0x${string}`,
-          abi: PAIR_ABI,
-          functionName: "marketMetadata"
-        });
-
-        setMarket({
-          id: marketId as `0x${string}`,
-          shortDescription: marketMetadata[0],
-          fullDescription: marketMetadata[1], 
-          imageURL: marketMetadata[2],
-          hasExpirationDate: marketMetadata[3],
-          expirationDate: marketMetadata[4],
-          mean: marketPosition.mean,
-          standardDeviation: marketPosition.stdDev,
-          totalBacking: marketPosition.collateral,
-          hasSettled: marketPosition.settled,
-          category: "Crypto",
-        });
-        
-        setKValue(marketPosition.k);
-        
-        const marketMean = Number(marketPosition.mean);
-        const marketStdDev = Number(marketPosition.stdDev);
-        const initSigma = marketStdDev;  
-        const marketMin = marketMean - 4 * marketStdDev;
-        const marketMax = marketMean + 4 * marketStdDev;
-        
-        setMeanValue(marketMean);
-        setStdDevValue(marketStdDev);
-        setXSliderMin(marketMin);
-        setXSliderMax(marketMax);
-
-        setSliderNumericValues({
-          left: marketMean - initSigma,
-          center: marketMean,
-          right: marketMean + initSigma,
-        });
-      } catch (error) {
-        console.error("Error loading market data:", error);
-      }
-    };
-
-    getMarketPosition();
-  }, [marketId]);
-  */
-
-  // Mock required collateral calculation
-  const [requiredCollateral, setRequiredCollateral] = useState(100);
-  useEffect(() => {
-    if (!market) return;
-    
-    // Mock collateral calculation
-    const mean = sliderNumericValues.center;
-    const stdDev = (sliderNumericValues.right - sliderNumericValues.left) / 2;
-    setUser_mean(mean);
-    setUser_stdDev(stdDev);
-
-    // Simple mock calculation
-    const marketMean = Number(market.mean);
-    const marketStdDev = Number(market.standardDeviation);
-    const meanDiff = Math.abs(mean - marketMean);
-    const stdDevDiff = Math.abs(stdDev - marketStdDev);
-    const totalDiff = (meanDiff / marketMean) + (stdDevDiff / marketStdDev);
-    setRequiredCollateral(Math.round(100 * (1 + totalDiff)));
-  }, [sliderNumericValues, market]);
-
->>>>>>> Stashed changes
   // Calculate if input is sufficient
   const isCollateralSufficient = useMemo(() => {
     const inputValue = parseFloat(collateralInput);
@@ -408,30 +267,31 @@ export default function MarketDetailPage() {
     const mean = newValues.center;
     const stdDev = Math.abs(newValues.right - mean);
     
-<<<<<<< Updated upstream
     // Update both the slider values and the mean/stdDev states
-=======
-    // Update slider values
->>>>>>> Stashed changes
     setSliderNumericValues({
       left: mean - stdDev,
       center: mean,
       right: mean + stdDev
     });
-<<<<<<< Updated upstream
     
     // Update the mean and stdDev states that control the curve
     setMeanValue(mean);
     setStdDevValue(stdDev);
   };
-=======
->>>>>>> Stashed changes
 
-    // Update mean and stdDev values
-    setMeanValue(mean);
-    setStdDevValue(stdDev);
+  const bgColor = mode === 'pro' ? 'bg-poseidon-dark-blue' : 'bg-light-background';
+  const textColor = mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text';
+  const cardBgColor = mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card';
+  const borderColor = mode === 'pro' ? 'border-poseidon-border' : 'border-light-border';
+  const inputBgColor = mode === 'pro' ? 'bg-poseidon-deep-blue' : 'bg-light-bg';
+  const buttonTextColor = mode === 'pro' ? 'text-poseidon-dark-blue' : 'text-light-background';
+  const accentColor = mode === 'pro' ? 'bg-poseidon-accent-cyan' : 'bg-light-accent';
+  const hoverAccentColor = mode === 'pro' ? 'hover:bg-cyan-400' : 'hover:bg-blue-400';
+  const subtleButtonBg = mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-bg';
+  const subtleButtonBorder = mode === 'pro' ? 'border-poseidon-border' : 'border-light-border';
+  const subtleButtonHoverBg = mode === 'pro' ? 'hover:bg-poseidon-border' : 'hover:bg-light-hover';
+  const tableHeaderBg = mode === 'pro' ? 'bg-poseidon-deep-blue/60' : 'bg-light-hover';
 
-<<<<<<< Updated upstream
   const handleDiscardProBet = () => {
     if (numericXData.length > 0) {
       const minVal = numericXData[0];
@@ -495,71 +355,6 @@ export default function MarketDetailPage() {
         // value: parseEther(collateralInput),
       });
 
-=======
-    // Update series using fixed x-points
-    if (market?.xPoints) {
-      const newSeries = market.xPoints.map(x => ({
-        x,
-        y: Math.exp(-Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2))) / (stdDev * Math.sqrt(2 * Math.PI))
-      }));
-      setSeries(newSeries);
-    }
-  };
-
-  // Handle mean input changes
-  const handleMeanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value === '' ? null : Number(e.target.value);
-    if (val !== null && stdDevValue !== null) {
-      setMeanValue(val);
-      setSliderNumericValues({
-        left: val - stdDevValue,
-        center: val,
-        right: val + stdDevValue
-      });
-
-      // Update series with new mean
-      if (market?.xPoints) {
-        const newSeries = market.xPoints.map(x => ({
-          x,
-          y: Math.exp(-Math.pow(x - val, 2) / (2 * Math.pow(stdDevValue, 2))) / (stdDevValue * Math.sqrt(2 * Math.PI))
-        }));
-        setSeries(newSeries);
-      }
-    }
-  };
-
-  // Handle stdDev input changes
-  const handleStdDevChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value === '' ? null : Number(e.target.value);
-    if (val !== null && meanValue !== null) {
-      setStdDevValue(val);
-      setSliderNumericValues({
-        left: meanValue - val,
-        center: meanValue,
-        right: meanValue + val
-      });
-
-      // Update series with new stdDev
-      if (market?.xPoints) {
-        const newSeries = market.xPoints.map(x => ({
-          x,
-          y: Math.exp(-Math.pow(x - meanValue, 2) / (2 * Math.pow(val, 2))) / (val * Math.sqrt(2 * Math.PI))
-        }));
-        setSeries(newSeries);
-      }
-    }
-  };
-
-  // Mock handlePlaceBet
-  const handlePlaceBet = async () => {
-    try {
-      console.log('Placing bet with:', {
-        mean: user_mean,
-        stdDev: user_stdDev,
-        collateral: collateralInput
-      });
-
->>>>>>> Stashed changes
       toast({
         title: 'Success',
         description: 'Bet placed!',
@@ -591,6 +386,7 @@ export default function MarketDetailPage() {
         ]);
       }
       setCollateralInput('');
+      // optionally: refetch positions / market state here
     } catch (err) {
       console.error(err);
       toast({
@@ -686,7 +482,7 @@ useEffect(() => {
   const [isResolving, setIsResolving] = useState(false);
 
   return (
-    <div className={`min-h-screen w-full p-4 sm:p-6 lg:p-8 ${mode === 'pro' ? 'bg-poseidon-dark-blue' : 'bg-light-background'} ${mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text'}`}>
+    <div className={`min-h-screen w-full p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor}`}>
       <style>
         {`
           button {
@@ -713,7 +509,7 @@ useEffect(() => {
 
           {/* Distribution Chart Area */}
           {series && mode === 'pro' && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
+            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
               <h2 className="text-xl font-semibold mb-4">Community Prediction</h2>
               <div className="h-80 md:h-80 lg:h-96 w-full" style={{ minHeight: '350px' }}>
                 <DistributionChart
@@ -727,21 +523,13 @@ useEffect(() => {
               </div>
             </div>
           )}
-
-          {/* Discrete Distribution for Novice Mode */}
+      </div>
+          {/* Discrete Distribution for Novice Mode */} {/*
           {mode === 'novice' && market?.discreteOptions && (
             <div className="space-y-4">
               <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
                 <h2 className="text-xl font-semibold mb-4">Community Prediction</h2>
                 <div className="h-60 w-full flex flex-col justify-center">
-=======
-          {/*
-          {mode === 'novice' && market.discreteOptions && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
-              <h2 className="text-xl font-semibold mb-4">Community Prediction</h2>
-              <div className="h-80 md:h-80 lg:h-96 w-full" style={{ minHeight: '350px' }}>
-                <div className="space-y-6 h-full flex flex-col justify-center">
->>>>>>> Stashed changes
                   <NoviceHistogram
                     buckets={bucketProbabilities}
                     selected={selectedDiscreteOption ? [{ id: selectedDiscreteOption, weight: 1 }] : []}
@@ -813,29 +601,26 @@ useEffect(() => {
               </div>
             </div>
           )} */}
-        </div>
-
+''
           {/* Slider and controls */}
-          {mode === 'pro' && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
-              <h2 className="text-xl font-semibold mb-4">Adjust Your Prediction</h2>
-              <MultiSlider
-                min={xSliderMin}
-                max={xSliderMax}
-                step={Math.max(0.01, parseFloat(((xSliderMax - xSliderMin) / 200).toFixed(2)))}
-                value={sliderNumericValues}
+              {mode === 'pro' && sliderNumericValues && numericXData.length > 0 && (
+            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
+                  <MultiSlider
+                    min={xSliderMin}
+                    max={xSliderMax}
+                    step={Math.max(0.01, parseFloat(((xSliderMax - xSliderMin) / 100).toFixed(2)))}
+                    value={sliderNumericValues}
                 onChange={handleSliderChange}
-                clampStep={Math.max(0.001, parseFloat(((xSliderMax - xSliderMin) / 400).toFixed(3)))}
-                disabled={isMarketResolving}
-              />
-              <div className="flex justify-center gap-6 mt-6 flex-wrap items-center">
-                <div className="flex flex-col items-center">
+                    clampStep={Math.max(0.001, parseFloat(((xSliderMax - xSliderMin) / 200).toFixed(3)))}
+                    disabled={isMarketResolving}
+                  />
+                  <div className="flex justify-center gap-6 mt-6 flex-wrap items-center">
+                    <div className="flex flex-col items-center">
                   <label htmlFor="mean-input" className="text-xs mb-1">Mean</label>
-                  <input
+                      <input
                     id="mean-input"
                     type="text"
                     value={meanValue?.toFixed(2) ?? ''}
-<<<<<<< Updated upstream
                     onChange={e => {
                       const val = e.target.value === '' ? null : Number(e.target.value);
                       
@@ -849,19 +634,15 @@ useEffect(() => {
                         });
                       }
                     }}
-=======
-                    onChange={handleMeanChange}
->>>>>>> Stashed changes
                     className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
                   />
-                </div>
-                <div className="flex flex-col items-center">
+                    </div>
+                    <div className="flex flex-col items-center">
                   <label htmlFor="stddev-input" className="text-xs mb-1">Standard Deviation</label>
-                  <input
+                      <input
                     id="stddev-input"
                     type="text"
                     value={stdDevValue?.toFixed(2) ?? ''}
-<<<<<<< Updated upstream
                     onChange={e => {
                       const val = e.target.value === '' ? null : Number(e.target.value);
                       
@@ -875,13 +656,10 @@ useEffect(() => {
                         });
                       }
                     }}
-=======
-                    onChange={handleStdDevChange}
->>>>>>> Stashed changes
                     className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
                   />
-                </div>
-              </div>
+                    </div>
+                  </div>
             </div>
           )}
 
@@ -898,7 +676,7 @@ useEffect(() => {
                           ? 'border-b-2 border-poseidon-accent-cyan text-poseidon-accent-cyan bg-transparent' 
                           : 'border-b-2 border-blue-400 text-blue-600 bg-transparent')
                       : (mode === 'pro' 
-                          ? `text-poseidon-light-text bg-transparent hover:text-poseidon-accent-cyan hover:border-b-2 hover:border-poseidon-accent-cyan/50 ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}` 
+                          ? `text-poseidon-light-text bg-transparent hover:text-poseidon-accent-cyan hover:border-b-2 hover:border-poseidon-accent-cyan/50 ${subtleButtonBorder}` 
                           : `text-gray-600 bg-transparent hover:text-blue-600 hover:border-b-2 hover:border-blue-400/50`)
                   }`}
                 >
@@ -908,7 +686,7 @@ useEffect(() => {
             </div>
             
             {/* Tab Content */}
-            <div className={`mt-4 ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'} rounded-lg shadow-md p-4`}>
+            <div className={`mt-4 ${cardBgColor} rounded-lg shadow-md p-4`}>
               {activeTab === 'Predict' && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Make Your Prediction</h3>
@@ -994,7 +772,7 @@ useEffect(() => {
           </div>
           
           {/* Description/Activity Feed Placeholder */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h2 className="text-xl font-semibold mb-3">Market Details</h2>
             <p className="text-sm leading-relaxed">
               {market?.fullDescription || "Detailed description for this market will be displayed here. This section can include resolution criteria, methodology, and other relevant information to help users make informed predictions."}
@@ -1006,19 +784,19 @@ useEffect(() => {
         {/* Sidebar Area */}
         <div className="lg:w-1/3 w-full space-y-6">
           {/* Make a Prediction Box */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'} mt-[60px]`}>
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor} mt-[60px]`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Make a Prediction</h2>
               {/* PDF/CDF Toggle moved here */}
               {mode === 'pro' && series && (
                 <div className="flex items-center space-x-2">
-                  <span className={`text-sm font-medium ${predictionType === 'pdf' ? mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text' : (mode === 'pro' ? 'text-poseidon-muted-text' : 'text-light-text-muted')}`}>PDF</span>
+                  <span className={`text-sm font-medium ${predictionType === 'pdf' ? textColor : (mode === 'pro' ? 'text-poseidon-muted-text' : 'text-light-text-muted')}`}>PDF</span>
                   <button 
                     onClick={() => setPredictionType(pt => pt === 'pdf' ? 'cdf' : 'pdf')} 
-                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none ${predictionType === 'cdf' ? mode === 'pro' ? 'bg-poseidon-accent-cyan' : 'bg-cyan-400' : (mode === 'pro' ? 'bg-poseidon-deep-blue' : 'bg-gray-300')}`}>
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none ${predictionType === 'cdf' ? accentColor : (mode === 'pro' ? 'bg-poseidon-deep-blue' : 'bg-gray-300')}`}>
                     <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${predictionType === 'cdf' ? 'translate-x-6' : 'translate-x-1'}`}/>
                   </button>
-                  <span className={`text-sm font-medium ${predictionType === 'cdf' ? mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text' : (mode === 'pro' ? 'text-poseidon-muted-text' : 'text-light-text-muted')}`}>CDF</span>
+                  <span className={`text-sm font-medium ${predictionType === 'cdf' ? textColor : (mode === 'pro' ? 'text-poseidon-muted-text' : 'text-light-text-muted')}`}>CDF</span>
                 </div>
               )}
             </div>
@@ -1109,9 +887,9 @@ useEffect(() => {
                   <table className={`w-full border-collapse ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}>
                     <thead>
                       <tr>
-                        <th className={`p-2 border-b font-normal text-left ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}></th>
-                        <th className={`p-2 border-b font-normal text-center ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}>Mean</th>
-                        <th className={`p-2 border-b font-normal text-center ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}>Standard<br/>Deviation</th>
+                        <th className={`p-2 border-b font-normal text-left ${tableHeaderBg} ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}></th>
+                        <th className={`p-2 border-b font-normal text-center ${tableHeaderBg} ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}>Mean</th>
+                        <th className={`p-2 border-b font-normal text-center ${tableHeaderBg} ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}>Standard<br/>Deviation</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1187,10 +965,10 @@ useEffect(() => {
             {!series && !market?.discreteOptions && (
               <p>Prediction interface for this market type is not yet available.</p>
             )}
-          </div> 
+          </div> */}
 
           {/* Market Info Box Placeholder */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">Market Info</h3>
             <ul className="space-y-1 text-sm">
               <li><strong>Resolution Criteria:</strong> To be defined.</li>
@@ -1231,13 +1009,13 @@ useEffect(() => {
           </div>
 
           {/* Authors & Group Box Placeholder */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">Authors & Group</h3>
             <p className="text-sm">Created by Pythia Admin.</p>
           </div>
 
           {/* Tags Box Placeholder */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">Tags</h3>
             <div className="flex flex-wrap gap-2">
               {market?.category && (
@@ -1252,7 +1030,7 @@ useEffect(() => {
           </div>
           
           {/* News & Analysis Placeholder */}
-           <div className={`p-4 sm:p-6 rounded-lg shadow-md ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
+           <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">News & Analysis</h3>
             <ul className="space-y-2 text-sm">
                 <li><a href="#" className={`${mode === 'pro' ? 'text-poseidon-accent-cyan hover:underline' : 'text-light-accent hover:underline'}`}>Related News Article 1</a></li>

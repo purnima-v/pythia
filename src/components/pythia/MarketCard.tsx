@@ -14,13 +14,8 @@ export type Market = {
   totalBacking: bigint;
   hasSettled: boolean;
   category: string;
-<<<<<<< Updated upstream
   discreteOptions?: string[];
 }
-=======
-  xPoints?: number[];
-};
->>>>>>> Stashed changes
 
 interface MarketCardProps {
   market: Market;
