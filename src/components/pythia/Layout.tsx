@@ -200,9 +200,9 @@ export default function Layout({ children }: LayoutProps) {
               <div className="flex items-center">
                 <Link to="/" className={`text-4xl font-bold ${logoTextColor} font-['Uncial Antiqua'] tracking-wider mr-12`}>Pythia</Link>
                 <div className="hidden md:flex items-center space-x-8">
-                  <Link to="/" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
+                  {/*<Link to="/" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
                     Predict
-                  </Link>
+                  </Link>*/}
                   <Link to="/portfolio" className={`text-sm font-medium ${navTextColor} hover:text-opacity-80 transition-colors font-['Readex Pro']`}>
                     Portfolio
                   </Link>
@@ -256,14 +256,14 @@ export default function Layout({ children }: LayoutProps) {
                   )}
                 </div>
 
-                {/* Mode Toggle Button */}
+                {/* Mode Toggle Button 
                 <button
                   onClick={toggleMode}
                   className={`px-4 py-2 rounded-lg ${bgColor} ${modeToggleIconHoverColor} transition-colors font-medium text-sm font-sans`}
                   aria-label={mode === 'pro' ? 'Switch to Novice Mode' : 'Switch to Pro Mode'}
                 >
                   {mode === 'pro' ? 'Novice' : 'Pro'}
-                </button>
+                </button> */}
 
                 {/* Bell Icon */}
                 <button 

@@ -6,7 +6,7 @@ import { useMode } from '../components/pythia/Layout.tsx'; // To maintain consis
 import DistributionChart from '../components/pythia/DistributionChart.tsx';
 import { type Market } from '../components/pythia/MarketCard.tsx';
 import MultiSlider, { type MultiSliderValue as NumericSliderValue } from '../components/sliders/MultiSlider.tsx'; // Renamed import type
-import NoviceHistogram from '../components/pythia/NoviceHistogram';
+//import NoviceHistogram from '../components/pythia/NoviceHistogram';
 //import { useMockCreateMarket } from '../useMockCreateMarket';
 //import { useMockPlaceBet } from '../useMockPlaceBet';
 import { dummyAbi, dummyAddress } from '../contracts/dummyMarket';
@@ -55,7 +55,7 @@ export default function MarketDetailPage() {
   const [market, setMarket] = useState<Market | null>(null);
 
   // State for Novice mode discrete option selection
-  const [selectedDiscreteOption, setSelectedDiscreteOption] = useState<string | null>(null);
+  //const [selectedDiscreteOption, setSelectedDiscreteOption] = useState<string | null>(null);
   
   // State for Pro Mode betting
   const [predictionType, setPredictionType] = useState<'pdf' | 'cdf'>('pdf');
@@ -97,8 +97,8 @@ export default function MarketDetailPage() {
   }, [market?.discreteOptions]);
 
   // Add state for novice collateral input and positions
-  const [noviceCollateralInput, setNoviceCollateralInput] = useState('');
-  const [novicePositions, setNovicePositions] = useState<Array<{
+  //noviceCollateralInput, setNoviceCollateralInput] = useState('');
+  /*const [novicePositions, setNovicePositions] = useState<Array<{
     id: string;
     option: string;
     collateral: number;
@@ -165,7 +165,7 @@ export default function MarketDetailPage() {
         variant: 'destructive',
       });
     }
-  };
+  }; */
 
   const [kValue, setKValue] = useState<bigint | null>(null);
 
@@ -729,7 +729,6 @@ useEffect(() => {
           )}
 
           {/* Discrete Distribution for Novice Mode */}
-<<<<<<< Updated upstream
           {mode === 'novice' && market?.discreteOptions && (
             <div className="space-y-4">
               <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
@@ -813,7 +812,8 @@ useEffect(() => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
+        </div>
 
           {/* Slider and controls */}
           {mode === 'pro' && (
@@ -913,11 +913,11 @@ useEffect(() => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Make Your Prediction</h3>
                   <p className="text-sm text-gray-600 dark:text-poseidon-muted-text">
-                    Use the controls on the right to make your prediction. You can either:
+                    Use the controls on the right to make your prediction.
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 dark:text-poseidon-muted-text space-y-2">
-                    <li>Select a range for continuous predictions (Pro mode)</li>
-                    <li>Choose from discrete options (Novice mode)</li>
+                    <li>Select a range for continuous predictions</li>
+                    {/*<li>Choose from discrete options (Novice mode)</li>*/}
                   </ul>
                 </div>
               )}
@@ -1160,7 +1160,7 @@ useEffect(() => {
                 </div>
               </div>
             )}
-          
+          {/*
             {mode === 'novice' && market?.discreteOptions && (
               <div className="space-y-3">
                 {market.discreteOptions.map(option => (
@@ -1184,10 +1184,10 @@ useEffect(() => {
                 )}
               </div>
             )}
-            {!series && {/*!market?.discreteOptions*/} && (
+            {!series && !market?.discreteOptions && (
               <p>Prediction interface for this market type is not yet available.</p>
             )}
-          </div>
+          </div> 
 
           {/* Market Info Box Placeholder */}
           <div className={`p-4 sm:p-6 rounded-lg shadow-md ${mode === 'pro' ? 'bg-poseidon-mid-blue' : 'bg-light-card'}`}>
