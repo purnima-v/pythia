@@ -502,122 +502,50 @@ useEffect(() => {
           }
         `}
       </style>
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        {/* Main Content Area */}
-        <div className="lg:w-2/3 w-full">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-6">{market?.shortDescription}</h1>
-
-          {/* Distribution Chart Area */}
+  
+      {/* Market Title */}
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">{market?.shortDescription}</h1>
+  
+      {/* Main Grid Container */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        
+        {/* Left Column - spans 2 columns on large screens */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Distribution Chart - Full Width */}
           {series && mode === 'pro' && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
+            <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
               <h2 className="text-xl font-semibold mb-4">Community Prediction</h2>
-              <div className="h-80 md:h-80 lg:h-96 w-full" style={{ minHeight: '350px' }}>
+              <div className="h-80 w-full" style={{ minHeight: '350px' }}>
                 <DistributionChart
                   data={series}
                   mode={mode}
                   meanValue={meanValue}
                   stdDevValue={stdDevValue}
                   showCDF={predictionType === 'cdf'}
-                  height={420}
+                  height={350}
                 />
               </div>
             </div>
           )}
-      </div>
-          {/* Discrete Distribution for Novice Mode */} {/*
-          {mode === 'novice' && market?.discreteOptions && (
-            <div className="space-y-4">
-              <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
-                <h2 className="text-xl font-semibold mb-4">Community Prediction</h2>
-                <div className="h-60 w-full flex flex-col justify-center">
-                  <NoviceHistogram
-                    buckets={bucketProbabilities}
-                    selected={selectedDiscreteOption ? [{ id: selectedDiscreteOption, weight: 1 }] : []}
-                    accentColor={'#93c5fd'}
-                    onHover={id => id && setSelectedDiscreteOption(id)}
-                  />
-                </div>
-              </div>
-              <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
-                <h2 className="text-lg font-semibold mb-2">Choose Your Option</h2>
-                <div className="space-y-2">
-                  {market.discreteOptions.map(option => (
-                    <button
-                      key={option}
-                      onClick={() => setSelectedDiscreteOption(option)}
-                      className={`w-full p-3 rounded text-left transition-colors font-semibold border ${selectedDiscreteOption === option ? 'bg-blue-100 text-gray-800 border-blue-300' : `${subtleButtonBg} hover:bg-blue-50 ${subtleButtonBorder} ${textColor}`}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-4 flex gap-4 items-center">
-                  <div className="flex-1">
-                    <label htmlFor="novice-collateral-input" className="text-sm mb-1 block">Your Collateral</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">$</span>
-                      <input
-                        id="novice-collateral-input"
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={noviceCollateralInput}
-                        onChange={e => setNoviceCollateralInput(e.target.value)}
-                        placeholder="Enter amount"
-                        className={`w-full p-2 pl-7 rounded border text-sm bg-white text-gray-900 border-gray-300`}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    className={`flex-1 py-2 px-4 rounded font-semibold transition-colors ${isNoviceCollateralSufficient && selectedDiscreteOption ? 'bg-blue-100 text-gray-800 hover:bg-blue-200' : 'bg-gray-100 text-gray-600 cursor-not-allowed'}`}
-                    disabled={!isNoviceCollateralSufficient || !selectedDiscreteOption}
-                    onClick={handlePlaceNoviceBet}
-                  >
-                    Place Bet
-                  </button>
-                </div>
-                <div className="pt-4 text-sm">
-                  <table className={`w-full border-collapse border-light-border`}>
-                    <thead>
-                      <tr>
-                        <th className={`p-2 border-b font-normal text-left ${tableHeaderBg}`}>Option</th>
-                        <th className={`p-2 border-b font-normal text-center ${tableHeaderBg}`}>Community %</th>
-                        <th className={`p-2 border-b font-normal text-center ${tableHeaderBg}`}>My Bets</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bucketProbabilities.map(bucket => (
-                        <tr key={bucket.id}>
-                          <td className="p-2 border-b">{bucket.rangeLabel}</td>
-                          <td className="p-2 border-b text-center">{(bucket.communityProb * 100).toFixed(1)}%</td>
-                          <td className="p-2 border-b text-center">
-                            {novicePositions.filter(p => p.option === bucket.id).length}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )} */}
-''
-          {/* Slider and controls */}
-              {mode === 'pro' && sliderNumericValues && numericXData.length > 0 && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
-                  <MultiSlider
-                    min={xSliderMin}
-                    max={xSliderMax}
-                    step={Math.max(0.01, parseFloat(((xSliderMax - xSliderMin) / 100).toFixed(2)))}
-                    value={sliderNumericValues}
+          
+          {/* Slider and Controls - Below Distribution */}
+          {mode === 'pro' && sliderNumericValues && numericXData.length > 0 && (
+            <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
+              <h2 className="text-xl font-semibold mb-4">Adjust Your Prediction</h2>
+              <MultiSlider
+                min={xSliderMin}
+                max={xSliderMax}
+                step={Math.max(0.01, parseFloat(((xSliderMax - xSliderMin) / 100).toFixed(2)))}
+                value={sliderNumericValues}
                 onChange={handleSliderChange}
-                    clampStep={Math.max(0.001, parseFloat(((xSliderMax - xSliderMin) / 200).toFixed(3)))}
-                    disabled={isMarketResolving}
-                  />
-                  <div className="flex justify-center gap-6 mt-6 flex-wrap items-center">
-                    <div className="flex flex-col items-center">
+                clampStep={Math.max(0.001, parseFloat(((xSliderMax - xSliderMin) / 200).toFixed(3)))}
+                disabled={isMarketResolving}
+              />
+              <div className="flex justify-center gap-6 mt-6 flex-wrap items-center">
+                <div className="flex flex-col items-center">
                   <label htmlFor="mean-input" className="text-xs mb-1">Mean</label>
-                      <input
+                  <input
                     id="mean-input"
                     type="text"
                     value={meanValue?.toFixed(2) ?? ''}
@@ -625,7 +553,6 @@ useEffect(() => {
                       const val = e.target.value === '' ? null : Number(e.target.value);
                       
                       if (val !== null && stdDevValue !== null) {
-                        // Update both the meanValue state and slider position
                         setMeanValue(val);
                         setSliderNumericValues({
                           left: val - stdDevValue,
@@ -636,10 +563,10 @@ useEffect(() => {
                     }}
                     className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
                   />
-                    </div>
-                    <div className="flex flex-col items-center">
+                </div>
+                <div className="flex flex-col items-center">
                   <label htmlFor="stddev-input" className="text-xs mb-1">Standard Deviation</label>
-                      <input
+                  <input
                     id="stddev-input"
                     type="text"
                     value={stdDevValue?.toFixed(2) ?? ''}
@@ -647,7 +574,6 @@ useEffect(() => {
                       const val = e.target.value === '' ? null : Number(e.target.value);
                       
                       if (val !== null && meanValue !== null) {
-                        // Update both the stdDevValue state and slider position
                         setStdDevValue(val);
                         setSliderNumericValues({
                           left: meanValue - val,
@@ -658,12 +584,12 @@ useEffect(() => {
                     }}
                     className={`w-20 px-2 py-1 rounded border text-center ${mode === 'pro' ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' : 'bg-white text-gray-900 border-gray-300'}`}
                   />
-                    </div>
-                  </div>
+                </div>
+              </div>
             </div>
           )}
-
-          {/* Tabs */}
+          
+          {/* Tabs - Below Slider */}
           <div className="mb-6">
             <div className={`flex border-b ${mode === 'pro' ? 'border-poseidon-border' : 'border-gray-200'}`}>
               {['Predict', 'Comments', 'Related'].map((tabName) => (
@@ -691,15 +617,15 @@ useEffect(() => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Make Your Prediction</h3>
                   <p className="text-sm text-gray-600 dark:text-poseidon-muted-text">
-                    Use the controls on the right to make your prediction.
+                    Use the controls above to make your prediction.
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 dark:text-poseidon-muted-text space-y-2">
-                    <li>Select a range for continuous predictions</li>
-                    {/*<li>Choose from discrete options (Novice mode)</li>*/}
+                    <li>Adjust the slider to set your prediction range</li>
+                    <li>Enter specific mean and standard deviation values</li>
                   </ul>
                 </div>
               )}
-
+  
               {activeTab === 'Comments' && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Discussion</h3>
@@ -737,7 +663,7 @@ useEffect(() => {
                   </div>
                 </div>
               )}
-
+  
               {activeTab === 'Related' && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Related Markets</h3>
@@ -770,24 +696,15 @@ useEffect(() => {
               )}
             </div>
           </div>
-          
-          {/* Description/Activity Feed Placeholder */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
-            <h2 className="text-xl font-semibold mb-3">Market Details</h2>
-            <p className="text-sm leading-relaxed">
-              {market?.fullDescription || "Detailed description for this market will be displayed here. This section can include resolution criteria, methodology, and other relevant information to help users make informed predictions."}
-            </p>
-          </div>
-
         </div>
-
-        {/* Sidebar Area */}
-        <div className="lg:w-1/3 w-full space-y-6">
-          {/* Make a Prediction Box */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor} mt-[60px]`}>
+        
+        {/* Right Column - Make a Prediction and Market Details */}
+        <div className="space-y-6">
+          {/* Make a Prediction Box - Now at top of right column */}
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Make a Prediction</h2>
-              {/* PDF/CDF Toggle moved here */}
+              {/* PDF/CDF Toggle */}
               {mode === 'pro' && series && (
                 <div className="flex items-center space-x-2">
                   <span className={`text-sm font-medium ${predictionType === 'pdf' ? textColor : (mode === 'pro' ? 'text-poseidon-muted-text' : 'text-light-text-muted')}`}>PDF</span>
@@ -800,88 +717,89 @@ useEffect(() => {
                 </div>
               )}
             </div>
+            
+            {/* Collateral Input and Place Bet Button */}
             {mode === 'pro' && series && (
               <div className="space-y-4">
-                {/* Remove PDF/CDF toggle from here */}
-                {/* Remove Discard button, update Place Bet button color */}
                 <div className="flex flex-col space-y-3 pt-4">
-                    <div className="flex gap-4">
-                        <div className={`flex-1 text-sm p-2 rounded border ${
-                            mode === 'pro' 
-                                ? collateralInput && !isCollateralSufficient
-                                    ? 'bg-poseidon-deep-blue/50 text-yellow-400 border-yellow-400/30'
-                                    : collateralInput && isCollateralSufficient
-                                        ? 'bg-poseidon-deep-blue/50 text-green-400 border-green-400/30'
-                                        : 'bg-poseidon-deep-blue/50 text-red-400 border-red-400/30'
-                                : collateralInput && !isCollateralSufficient
-                                    ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
-                                    : collateralInput && isCollateralSufficient
-                                        ? 'bg-green-50 text-green-600 border-green-200'
-                                        : 'bg-red-50 text-red-600 border-red-200'
-                        }`}>
-                            {collateralInput && isCollateralSufficient ? (
-                                <div>
-                                    <div className="font-medium mb-1 text-green-400">Ready to Trade</div>
-                                    <div className="text-xs mt-1">
-                                        Your collateral of ${parseFloat(collateralInput).toLocaleString()} exceeds the required amount of ${requiredCollateral.toLocaleString()}
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="font-medium mb-1">Required Collateral: ${requiredCollateral.toLocaleString()}</div>
-                                    <div className="text-xs mt-2 text-gray-400 dark:text-poseidon-muted-text">
-                                      Minimum stake for your prediction.
-                                    </div>
-                                    {collateralInput && !isCollateralSufficient && (
-                                        <div className="text-xs mt-1">
-                                            Consider aligning your prediction more with the community to reduce required collateral:
-                                            <ul className="list-disc list-inside mt-1">
-                                                <li>Current community mean: {numericXData.length > 0 ? d3.mean(numericXData)?.toFixed(2) : 'N/A'}</li>
-                                                <li>Your mean: {meanValue?.toFixed(2) ?? 'N/A'}</li>
-                                                <li>Current community std dev: {numericXData.length > 0 ? d3.deviation(numericXData)?.toFixed(2) : 'N/A'}</li>
-                                                <li>Your std dev: {stdDevValue?.toFixed(2) ?? 'N/A'}</li>
-                                            </ul>
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                  <div className="flex gap-4">
+                    <div className={`flex-1 text-sm p-2 rounded border ${
+                      mode === 'pro' 
+                        ? collateralInput && !isCollateralSufficient
+                          ? 'bg-poseidon-deep-blue/50 text-yellow-400 border-yellow-400/30'
+                          : collateralInput && isCollateralSufficient
+                            ? 'bg-poseidon-deep-blue/50 text-green-400 border-green-400/30'
+                            : 'bg-poseidon-deep-blue/50 text-red-400 border-red-400/30'
+                        : collateralInput && !isCollateralSufficient
+                          ? 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                          : collateralInput && isCollateralSufficient
+                            ? 'bg-green-50 text-green-600 border-green-200'
+                            : 'bg-red-50 text-red-600 border-red-200'
+                    }`}>
+                      {collateralInput && isCollateralSufficient ? (
+                        <div>
+                          <div className="font-medium mb-1 text-green-400">Ready to Trade</div>
+                          <div className="text-xs mt-1">
+                            Your collateral of ${parseFloat(collateralInput).toLocaleString()} exceeds the required amount of ${requiredCollateral.toLocaleString()}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                            <label htmlFor="collateral-input" className="text-sm mb-1 block">Your Collateral</label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">$</span>
-                                <input
-                                    id="collateral-input"
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={collateralInput}
-                                    onChange={(e) => setCollateralInput(e.target.value)}
-                                    placeholder="Enter amount"
-                                    disabled={isMarketResolving}
-                                    className={`w-full p-2 pl-7 rounded border text-sm ${
-                                        mode === 'pro' 
-                                            ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' 
-                                            : 'bg-white text-gray-900 border-gray-300'
-                                    } ${isMarketResolving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                />
+                      ) : (
+                        <>
+                          <div className="font-medium mb-1">Required Collateral: ${requiredCollateral.toLocaleString()}</div>
+                          <div className="text-xs mt-2 text-gray-400 dark:text-poseidon-muted-text">
+                            Minimum stake for your prediction.
+                          </div>
+                          {collateralInput && !isCollateralSufficient && (
+                            <div className="text-xs mt-1">
+                              Consider aligning your prediction more with the community to reduce required collateral:
+                              <ul className="list-disc list-inside mt-1">
+                                <li>Current community mean: {numericXData.length > 0 ? d3.mean(numericXData)?.toFixed(2) : 'N/A'}</li>
+                                <li>Your mean: {meanValue?.toFixed(2) ?? 'N/A'}</li>
+                                <li>Current community std dev: {numericXData.length > 0 ? d3.deviation(numericXData)?.toFixed(2) : 'N/A'}</li>
+                                <li>Your std dev: {stdDevValue?.toFixed(2) ?? 'N/A'}</li>
+                              </ul>
                             </div>
-                        </div>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <button 
-                      className={`flex-1 py-2 px-4 rounded font-semibold transition-colors ${
-                        isCollateralSufficient && !isMarketResolving
-                          ? `${mode === 'pro' ? 'bg-cyan-100' : 'bg-blue-100'} text-gray-800 hover:${
-                              mode === 'pro' ? 'bg-cyan-200' : 'bg-blue-200'
-                            }`
-                          : 'bg-gray-100 text-gray-600 cursor-not-allowed'
-                      }`}
-                      disabled={!isCollateralSufficient || isPlacingBet || isMarketResolving}
-                      onClick={handlePlaceBet}
-                    >
-                      {isPlacingBet ? 'Placing...' : 'Place Bet'}
-                    </button>
+                    <div className="flex-1">
+                      <label htmlFor="collateral-input" className="text-sm mb-1 block">Your Collateral</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">$</span>
+                        <input
+                          id="collateral-input"
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={collateralInput}
+                          onChange={(e) => setCollateralInput(e.target.value)}
+                          placeholder="Enter amount"
+                          disabled={isMarketResolving}
+                          className={`w-full p-2 pl-7 rounded border text-sm ${
+                            mode === 'pro' 
+                              ? 'bg-poseidon-deep-blue text-poseidon-light-text border-poseidon-border' 
+                              : 'bg-white text-gray-900 border-gray-300'
+                          } ${isMarketResolving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <button 
+                    className={`w-full py-2 px-4 rounded font-semibold transition-colors ${
+                      isCollateralSufficient && !isMarketResolving
+                        ? `${mode === 'pro' ? 'bg-cyan-100' : 'bg-blue-100'} text-gray-800 hover:${
+                            mode === 'pro' ? 'bg-cyan-200' : 'bg-blue-200'
+                          }`
+                        : 'bg-gray-100 text-gray-600 cursor-not-allowed'
+                    }`}
+                    disabled={!isCollateralSufficient || isPlacingBet || isMarketResolving}
+                    onClick={handlePlaceBet}
+                  >
+                    {isPlacingBet ? 'Placing...' : 'Place Bet'}
+                  </button>
                 </div>
+                
                 {/* Summary Table */}
                 <div className="pt-4 text-sm">
                   <table className={`w-full border-collapse ${mode === 'pro' ? 'border-poseidon-border' : 'border-light-border'}`}>
@@ -938,36 +856,17 @@ useEffect(() => {
                 </div>
               </div>
             )}
-          {/*
-            {mode === 'novice' && market?.discreteOptions && (
-              <div className="space-y-3">
-                {market.discreteOptions.map(option => (
-                  <button
-                    key={option}
-                    onClick={() => handleDiscreteOptionClick(option)}
-                    className={`prediction-button w-full p-3 rounded text-left transition-colors
-                      ${
-                        selectedDiscreteOption === option 
-                          ? 'bg-blue-100 text-gray-800'
-                          : `${subtleButtonBg} hover:bg-blue-50 border ${subtleButtonBorder} ${textColor}`
-                      }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-                 {selectedDiscreteOption && (
-                    <button className={`prediction-button w-full mt-3 py-2 px-4 rounded font-semibold bg-blue-100 text-gray-800 hover:bg-blue-200 transition-colors`}>
-                        Confirm Bet on: {selectedDiscreteOption}
-                    </button>
-                )}
-              </div>
-            )}
-            {!series && !market?.discreteOptions && (
-              <p>Prediction interface for this market type is not yet available.</p>
-            )}
-          </div> */}
+          </div>
 
-          {/* Market Info Box Placeholder */}
+          {/* Market Details */}
+          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
+            <h2 className="text-xl font-semibold mb-3">Market Details</h2>
+            <p className="text-sm leading-relaxed">
+              {market?.fullDescription || "Detailed description for this market will be displayed here. This section can include resolution criteria, methodology, and other relevant information to help users make informed predictions."}
+            </p>
+          </div>
+  
+          {/* Market Info Box */}
           <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">Market Info</h3>
             <ul className="space-y-1 text-sm">
@@ -1007,14 +906,14 @@ useEffect(() => {
               </li>
             </ul>
           </div>
-
-          {/* Authors & Group Box Placeholder */}
+  
+          {/* Authors & Group Box */}
           <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">Authors & Group</h3>
             <p className="text-sm">Created by Pythia Admin.</p>
           </div>
-
-          {/* Tags Box Placeholder */}
+  
+          {/* Tags Box */}
           <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">Tags</h3>
             <div className="flex flex-wrap gap-2">
@@ -1029,7 +928,7 @@ useEffect(() => {
             </div>
           </div>
           
-          {/* News & Analysis Placeholder */}
+          {/* News & Analysis */}
            <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
             <h3 className="text-lg font-semibold mb-3">News & Analysis</h3>
             <ul className="space-y-2 text-sm">
@@ -1037,9 +936,10 @@ useEffect(() => {
                 <li><a href="#" className={`${mode === 'pro' ? 'text-poseidon-accent-cyan hover:underline' : 'text-light-accent hover:underline'}`}>Analysis Blog Post</a></li>
             </ul>
           </div>
-
         </div>
       </div>
+      
+      {/* Your existing modals */}
       {showResolutionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className={`p-6 rounded-lg shadow-lg ${mode === 'pro' ? 'bg-poseidon-deep-blue' : 'bg-white'} max-w-md w-full`}>
@@ -1085,6 +985,7 @@ useEffect(() => {
           </div>
         </div>
       )}
+      
       {isMarketResolving && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className={`p-6 rounded-lg shadow-lg ${mode === 'pro' ? 'bg-poseidon-deep-blue' : 'bg-white'} max-w-md w-full text-center`}>
@@ -1096,4 +997,4 @@ useEffect(() => {
       )}
     </div>
   );
-                    }
+}
