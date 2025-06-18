@@ -2,7 +2,7 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MarketCard, { type Market } from '../components/pythia/MarketCard';
 import { useMode } from '../components/pythia/Layout';
-import { mockMarkets } from './MarketsPage';
+import { mockMarkets } from '../data/mockMarkets';
 
 export default function SearchResultsPage() {
   const { mode } = useMode();
@@ -15,9 +15,9 @@ export default function SearchResultsPage() {
   // Filter markets based on search query
   const filteredMarkets = mockMarkets.filter(market => {
     const searchableText = [
-      market.question,
+      market.shortDescription,
+      market.fullDescription,
       market.category,
-      market.currentPrediction,
       market.discreteOptions?.join(' ')
     ].join(' ').toLowerCase();
     

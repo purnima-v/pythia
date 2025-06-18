@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { mockMarkets } from './MarketsPage.tsx';
+import { mockMarkets } from '../data/mockMarkets';
 import { useMode } from '../components/pythia/Layout.tsx';
 import { type Market } from '../components/pythia/MarketCard.tsx';
 import { type MultiSliderValue as NumericSliderValue } from '../components/sliders/MultiSlider.tsx';

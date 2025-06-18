@@ -2,7 +2,20 @@ import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMode } from '../components/pythia/Layout.tsx';
 import DistributionChart from '../components/pythia/DistributionChart.tsx';
-import { mockMarkets } from './MarketsPage.tsx';
+import { mockMarkets } from '../data/mockMarkets';
+
+// Helper function to generate normal distribution data
+const generateNormalData = (mean: number, stdDev: number, n: number = 100) => {
+  const min = mean - 3 * stdDev;
+  const max = mean + 3 * stdDev;
+  const step = (max - min) / (n - 1);
+  
+  return Array.from({ length: n }, (_, i) => {
+    const x = min + i * step;
+    const y = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(-Math.pow(x - mean, 2) / (2 * stdDev * stdDev));
+    return { x, y };
+  });
+};
 
 export default function ResolvedMarketPage() {
   const { marketId } = useParams<{ marketId: string }>();
@@ -12,7 +25,7 @@ export default function ResolvedMarketPage() {
   const market = mockMarkets.find(m => m.id === marketId);
 
   // Dummy resolved market data
-  const resolvedMarket = {
+  const resolvedMarket = market ? {
     ...market,
     status: 'resolved',
     resolutionDate: new Date('2024-03-15'),
@@ -28,7 +41,7 @@ export default function ResolvedMarketPage() {
       stdDev: 2.5,
       confidence: 0.85,
       reward: 120, // Amount earned/lost
-      rank: 15, // User's rank among all predictors
+      rank: 15, // User's rank among all participants
       totalParticipants: 156
     },
     communityStats: {
@@ -39,8 +52,20 @@ export default function ResolvedMarketPage() {
         prediction: 42.3,
         reward: 500
       }
-    }
-  };
+    },
+    distributionData: generateNormalData(43.1, 3.2) // Generate distribution data for community stats
+  } : null;
+
+  if (!resolvedMarket) {
+    return (
+      <div className="p-4 sm:p-6 md:p-8 min-h-screen bg-poseidon-deep-blue text-poseidon-light-text">
+        <h1 className="text-2xl font-bold mb-6">Market not found</h1>
+        <Link to="/markets" className="text-poseidon-accent-cyan hover:underline">
+          Return to Markets
+        </Link>
+      </div>
+    );
+  }
 
   const bgColor = mode === 'pro' ? 'bg-poseidon-dark-blue' : 'bg-light-background';
   const textColor = mode === 'pro' ? 'text-poseidon-light-text' : 'text-light-text';
@@ -50,141 +75,132 @@ export default function ResolvedMarketPage() {
   const successColor = mode === 'pro' ? 'text-green-400' : 'text-green-600';
   const warningColor = mode === 'pro' ? 'text-yellow-400' : 'text-yellow-600';
 
-  if (!resolvedMarket) {
-    return <div className={`p-4 ${textColor}`}>Market not found</div>;
-  }
-
   return (
-    <div className={`min-h-screen w-full p-4 sm:p-6 lg:p-8 ${bgColor} ${textColor} font-serif`}>
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        {/* Main Content Area */}
-        <div className="lg:w-2/3 w-full">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold">{resolvedMarket.question}</h1>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${successColor} bg-opacity-10 ${mode === 'pro' ? 'bg-green-400' : 'bg-green-100'}`}>
-              Resolved
-            </span>
-          </div>
+    <div className={`p-4 sm:p-6 md:p-8 min-h-screen ${bgColor}`}>
+      <div className="max-w-7xl mx-auto">
+        <Link to="/markets" className={`inline-block mb-6 ${textColor} hover:underline`}>
+          ← Back to Markets
+        </Link>
 
-          {/* Outcome Banner */}
-          <div className={`p-6 rounded-lg shadow-md mb-6 ${cardBgColor} border ${borderColor}`}>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h2 className="text-xl font-semibold mb-2">Market Outcome</h2>
-                <p className="text-3xl font-bold">{resolvedMarket.outcome}</p>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="text-sm opacity-75">Your Prediction</p>
-                  <p className="text-xl font-semibold">{resolvedMarket.userPrediction.mean}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm opacity-75">Community Mean</p>
-                  <p className="text-xl font-semibold">{resolvedMarket.communityStats.mean}</p>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Chart and Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Market Question */}
+            <div className={`p-6 rounded-lg ${cardBgColor} border ${borderColor}`}>
+              <h1 className={`text-2xl font-bold mb-4 ${textColor}`}>
+                {resolvedMarket.shortDescription}
+              </h1>
+              <p className={`text-sm ${textColor} opacity-80`}>
+                {resolvedMarket.fullDescription}
+              </p>
             </div>
-          </div>
 
-          {/* Distribution Chart */}
-          {resolvedMarket.distributionData && (
-            <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
-              <h2 className="text-xl font-semibold mb-4">Final Distribution</h2>
-              <div className="w-full" style={{ height: '420px', minHeight: '420px' }}>
+            {/* Distribution Chart */}
+            <div className={`p-6 rounded-lg ${cardBgColor} border ${borderColor}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${textColor}`}>Market Distribution</h2>
+              <div className="h-64">
                 <DistributionChart
-                  data={resolvedMarket.distributionData}
+                  data={resolvedMarket.distributionData || []}
                   mode={mode}
+                  meanValue={resolvedMarket.userPrediction.mean}
+                  stdDevValue={resolvedMarket.userPrediction.stdDev}
                   showOutcome={true}
                   outcome={resolvedMarket.outcome}
-                  height={420}
                 />
               </div>
             </div>
-          )}
 
-          {/* Resolution Details */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md mb-6 ${cardBgColor}`}>
-            <h2 className="text-xl font-semibold mb-4">Resolution Details</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium mb-2">Resolution Source</h3>
-                <p className="text-sm">{resolvedMarket.resolutionDetails.source}</p>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">Methodology</h3>
-                <p className="text-sm">{resolvedMarket.resolutionDetails.methodology}</p>
-              </div>
-              <div>
-                <h3 className="font-medium mb-2">Notes</h3>
-                <p className="text-sm">{resolvedMarket.resolutionDetails.notes}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="lg:w-1/3 w-full space-y-6">
-          {/* Your Results */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
-            <h2 className="text-xl font-semibold mb-4">Your Results</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Reward</span>
-                <span className={`font-semibold ${resolvedMarket.userPrediction.reward >= 0 ? successColor : warningColor}`}>
-                  {resolvedMarket.userPrediction.reward >= 0 ? '+' : ''}{resolvedMarket.userPrediction.reward} USDC
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Rank</span>
-                <span className="font-semibold">
-                  #{resolvedMarket.userPrediction.rank} of {resolvedMarket.userPrediction.totalParticipants}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Prediction Accuracy</span>
-                <span className="font-semibold">
-                  {Math.abs(resolvedMarket.outcome - resolvedMarket.userPrediction.mean).toFixed(2)} units off
-                </span>
+            {/* Resolution Details */}
+            <div className={`p-6 rounded-lg ${cardBgColor} border ${borderColor}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${textColor}`}>Resolution Details</h2>
+              <div className="space-y-4">
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Final Outcome</h3>
+                  <p className={`text-2xl font-bold ${accentColor}`}>
+                    {resolvedMarket.outcome}
+                  </p>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Resolution Date</h3>
+                  <p className={textColor}>
+                    {resolvedMarket.resolutionDate.toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Source</h3>
+                  <p className={textColor}>{resolvedMarket.resolutionDetails.source}</p>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Methodology</h3>
+                  <p className={textColor}>{resolvedMarket.resolutionDetails.methodology}</p>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Notes</h3>
+                  <p className={textColor}>{resolvedMarket.resolutionDetails.notes}</p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Top Predictor */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
-            <h2 className="text-xl font-semibold mb-4">Top Predictor</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Name</span>
-                <span className="font-semibold">{resolvedMarket.communityStats.closestPredictor.name}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Prediction</span>
-                <span className="font-semibold">{resolvedMarket.communityStats.closestPredictor.prediction}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Reward</span>
-                <span className={`font-semibold ${successColor}`}>
-                  +{resolvedMarket.communityStats.closestPredictor.reward} USDC
-                </span>
+          {/* Right Column: Stats and User Results */}
+          <div className="space-y-6">
+            {/* User's Prediction Results */}
+            <div className={`p-6 rounded-lg ${cardBgColor} border ${borderColor}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${textColor}`}>Your Results</h2>
+              <div className="space-y-4">
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Your Prediction</h3>
+                  <p className={`text-2xl font-bold ${textColor}`}>
+                    {resolvedMarket.userPrediction.mean.toFixed(1)}
+                  </p>
+                  <p className={`text-sm ${textColor} opacity-80`}>
+                    ±{resolvedMarket.userPrediction.stdDev.toFixed(1)}
+                  </p>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Reward</h3>
+                  <p className={`text-2xl font-bold ${resolvedMarket.userPrediction.reward >= 0 ? successColor : warningColor}`}>
+                    {resolvedMarket.userPrediction.reward >= 0 ? '+' : ''}
+                    ${resolvedMarket.userPrediction.reward.toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Rank</h3>
+                  <p className={`text-2xl font-bold ${textColor}`}>
+                    #{resolvedMarket.userPrediction.rank}
+                  </p>
+                  <p className={`text-sm ${textColor} opacity-80`}>
+                    of {resolvedMarket.userPrediction.totalParticipants} participants
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Market Info */}
-          <div className={`p-4 sm:p-6 rounded-lg shadow-md ${cardBgColor}`}>
-            <h2 className="text-xl font-semibold mb-4">Market Info</h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Resolution Date</span>
-                <span>{resolvedMarket.resolutionDate.toLocaleDateString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Total Participants</span>
-                <span>{resolvedMarket.userPrediction.totalParticipants}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Category</span>
-                <span>{resolvedMarket.category}</span>
+            {/* Community Stats */}
+            <div className={`p-6 rounded-lg ${cardBgColor} border ${borderColor}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${textColor}`}>Community Stats</h2>
+              <div className="space-y-4">
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Community Mean</h3>
+                  <p className={`text-2xl font-bold ${textColor}`}>
+                    {resolvedMarket.communityStats.mean.toFixed(1)}
+                  </p>
+                  <p className={`text-sm ${textColor} opacity-80`}>
+                    ±{resolvedMarket.communityStats.stdDev.toFixed(1)}
+                  </p>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${textColor}`}>Closest Predictor</h3>
+                  <p className={`text-xl font-bold ${textColor}`}>
+                    {resolvedMarket.communityStats.closestPredictor.name}
+                  </p>
+                  <p className={`text-sm ${textColor} opacity-80`}>
+                    Prediction: {resolvedMarket.communityStats.closestPredictor.prediction.toFixed(1)}
+                  </p>
+                  <p className={`text-sm ${successColor}`}>
+                    Reward: ${resolvedMarket.communityStats.closestPredictor.reward.toFixed(2)}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

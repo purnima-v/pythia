@@ -1,11 +1,12 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState, createContext, useContext, useEffect } from 'react';
 import type { ReactNode } from 'react'; // Type-only import for ReactNode
 import { Link, useLocation, useNavigate } from 'react-router-dom'; // Added Link and useLocation
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationPopup from '../notifications/NotificationPopup';
-import { mockMarkets } from '../../pages/MarketsPage';
+import { mockMarkets } from '../../data/mockMarkets';
 import type { Market } from '../pythia/MarketCard';
 import { usePrivy } from '@privy-io/react-auth';
+import { useAccount } from 'wagmi';
 
 // Placeholder SVGs - replace with actual icons
 const SearchIcon = () => (
@@ -140,26 +141,18 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [location.search]);
 
-  // Filter markets based on search query for suggestions
-  const updateSuggestions = (query: string) => {
-    if (query.trim().length === 0) {
-      setSuggestions([]);
-      return;
-    }
-
-    const filtered = mockMarkets
-      .filter((market: Market) => 
-        market.question.toLowerCase().includes(query.toLowerCase())
-      )
-      .slice(0, 5); // Show top 5 matches
-
-    setSuggestions(filtered);
-  };
+  // Update search suggestions when markets change
+  useEffect(() => {
+    const suggestions = mockMarkets.map(market => ({
+      id: market.id,
+      question: market.shortDescription
+    }));
+    setSuggestions(suggestions);
+  }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-    updateSuggestions(value);
     setShowSuggestions(true);
   };
 
