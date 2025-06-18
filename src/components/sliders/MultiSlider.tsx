@@ -90,9 +90,20 @@ const MultiSlider: FC<Props> = ({
       finalRight = Math.max(min, Math.min(finalRight, max));
       finalCenter = Math.max(min, Math.min(finalCenter, max));
 
-      // Ensure order and clampStep after sync
-      finalLeft = Math.min(finalLeft, finalCenter - clampStep);
-      finalRight = Math.max(finalRight, finalCenter + clampStep);
+      // Calculate distances from center to left and right
+      const leftDistance = finalCenter - finalLeft;
+      const rightDistance = finalRight - finalCenter;
+      
+      // Use the smaller distance for both sides
+      const smallerDistance = Math.min(leftDistance, rightDistance);
+      
+      // Adjust both sides to use the smaller distance
+      finalLeft = finalCenter - smallerDistance;
+      finalRight = finalCenter + smallerDistance;
+
+      // Final bounds check after adjustment
+      finalLeft = Math.max(min, Math.min(finalLeft, max));
+      finalRight = Math.max(min, Math.min(finalRight, max));
     } else {
       // Individual handles are being dragged
       // First, ensure the order is maintained
