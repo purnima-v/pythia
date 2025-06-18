@@ -14,6 +14,7 @@ export type Market = {
   totalBacking: bigint;
   hasSettled: boolean;
   category: string;
+  chain: string;
   discreteOptions?: string[];
 }
 
@@ -58,9 +59,19 @@ export default function MarketCard({ market, mode }: MarketCardProps) {
     >
       {/* Category and Title */}
       <div>
-        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ring-1 mb-2 ${categoryBgColor} ${categoryTextColor} ${categoryRingColor}`}>
-          {market.category}
-        </span>
+        <div className="flex items-center gap-2 mb-2">
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ring-1 ${categoryBgColor} ${categoryTextColor} ${categoryRingColor}`}>
+            {market.category}
+          </span>
+          <span className="text-xs text-gray-400">|</span>
+          <span className={
+            mode === 'pro'
+              ? 'text-xs font-semibold px-2 py-0.5 rounded-full bg-poseidon-accent-cyan/10 text-poseidon-accent-cyan border border-poseidon-accent-cyan/30'
+              : 'text-xs font-semibold px-2 py-0.5 rounded-full bg-light-accent-primary/10 text-light-accent-primary border border-light-accent-primary/30'
+          }>
+            {market.chain}
+          </span>
+        </div>
         <h3 className={`font-semibold text-base mb-2 min-h-[10px] ${questionTextColor}`}>
           {market.shortDescription}
         </h3>

@@ -258,24 +258,24 @@ export default function Layout({ children }: LayoutProps) {
                   {mode === 'pro' ? 'Novice' : 'Pro'}
                 </button> */}
 
-                {/* Bell Icon */}
-                <button 
-                  className={`p-2 rounded-full ${bgColor} ${bellIconColor} transition-colors relative`}
-                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                >
-                  <BellIcon />
-                  {notifications.length > 0 && (
-                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                  )}
-                </button>
-
-                {/* Sign In Button */}
-                <button 
-                  onClick={authenticated ? logout : login}
-                  className={`${walletButtonBg} ${walletButtonText} px-5 py-2.5 text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-sans`}
-                >
-                  {authenticated ? 'Disconnect' : 'Sign In'}
-                </button>
+                {/* Wallet/Sign In Button and Chain Indicator */}
+                <div className="flex items-center space-x-2">
+                  {/* Chain Indicator */}
+                  <span className={
+                    mode === 'pro'
+                      ? 'px-2.5 py-0.5 rounded-full bg-poseidon-mid-blue/60 text-poseidon-accent-cyan text-xs font-medium border border-poseidon-border'
+                      : 'px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-medium border border-gray-300'
+                  }>
+                    Chain A
+                  </span>
+                  {/* Sign In/Wallet Button */}
+                  <button
+                    onClick={authenticated ? logout : login}
+                    className={`ml-2 px-4 py-2 rounded-lg ${walletButtonBg} ${walletButtonText} font-semibold shadow transition-colors duration-200`}
+                  >
+                    {authenticated ? 'Sign Out' : 'Sign In'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
