@@ -1,6 +1,6 @@
 # Pythia Frontend
 
-frontend repo for the first ever [distribution market]([url](https://www.paradigm.xyz/2024/12/distribution-markets))
+frontend repo for the first ever distribution market ([https://www.paradigm.xyz/2024/12/distribution-markets](url))
 
 pro mode: continuous distribution betting for advanced traders  
 novice mode: simple yes/no markets for casual users
